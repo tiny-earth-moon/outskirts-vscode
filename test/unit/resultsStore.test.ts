@@ -85,6 +85,25 @@ describe("ResultsStore", () => {
     assert.equal(store.get("a")?.stale.size, 0);
   });
 
+  it("ignores a change reported late but written before the scan started", () => {
+    const store = new ResultsStore();
+    store.startScan("a", 100);
+    store.noteChange(finding.file, 99);
+    store.set("a", [finding], "warning", 150);
+    assert.equal(store.get("a")?.stale.size, 0);
+    assert.equal(store.markStale("a", finding.file, 99), false);
+    assert.equal(store.get("a")?.stale.size, 0);
+    assert.equal(store.markStale("a", finding.file, 100), true);
+
+    store.startScan("a", 200);
+    store.noteChange(finding.file, 200);
+    store.set("a", [finding], "warning", 250);
+    assert.deepEqual([...(store.get("a")?.stale ?? [])], [finding.file]);
+
+    store.set("b", [finding], "warning", 300);
+    assert.equal(store.markStale("b", finding.file, 0), true);
+  });
+
   it("forgets the changes of a scan that ends without results", () => {
     const store = new ResultsStore();
     store.startScan("a");

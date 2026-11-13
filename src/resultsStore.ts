@@ -20,7 +20,8 @@ export class ResultsStore {
   private readonly entries = new Map<string, FolderResults>();
   private readonly listeners = new Set<() => void>();
   private known: ReadonlySet<string> | undefined;
-  private readonly changedDuringScan = new Map<string, Set<string>>();
+  private readonly running = new Map<string, { readonly startedAt: number; readonly changed: Set<string> }>();
+  private readonly shownScanStart = new Map<string, number>();
 
   get(folder: string): FolderResults | undefined {
     return this.entries.get(folder);
@@ -42,32 +43,39 @@ export class ResultsStore {
     if (this.known !== undefined && !this.known.has(folder)) {
       return false;
     }
-    const changed = this.changedDuringScan.get(folder);
-    this.changedDuringScan.delete(folder);
-    const stale = new Set(findings.map((finding) => finding.file).filter((file) => changed?.has(file) === true));
+    const scan = this.running.get(folder);
+    this.running.delete(folder);
+    if (scan === undefined) {
+      this.shownScanStart.delete(folder);
+    } else {
+      this.shownScanStart.set(folder, scan.startedAt);
+    }
+    const stale = new Set(findings.map((finding) => finding.file).filter((file) => scan?.changed.has(file) === true));
     this.entries.set(folder, { findings, severity, scannedAt, stale });
     this.notify();
     return true;
   }
 
-  startScan(folder: string): void {
-    this.changedDuringScan.set(folder, new Set());
+  startScan(folder: string, startedAt = Date.now()): void {
+    this.running.set(folder, { startedAt, changed: new Set() });
     this.notify();
   }
 
   endScan(folder: string): void {
-    if (this.changedDuringScan.delete(folder)) {
+    if (this.running.delete(folder)) {
       this.notify();
     }
   }
 
   get scanned(): readonly string[] {
-    return [...this.changedDuringScan.keys()];
+    return [...this.running.keys()];
   }
 
-  noteChange(file: string): void {
-    for (const changed of this.changedDuringScan.values()) {
-      changed.add(file);
+  noteChange(file: string, writtenAt?: number): void {
+    for (const scan of this.running.values()) {
+      if (!writtenBefore(writtenAt, scan.startedAt)) {
+        scan.changed.add(file);
+      }
     }
   }
 
@@ -81,9 +89,9 @@ export class ResultsStore {
     return true;
   }
 
-  markStale(folder: string, file: string): boolean {
+  markStale(folder: string, file: string, writtenAt?: number): boolean {
     const entry = this.entries.get(folder);
-    if (entry === undefined || entry.stale.has(file) || !entry.findings.some((finding) => finding.file === file)) {
+    if (entry === undefined || entry.stale.has(file) || writtenBefore(writtenAt, this.shownScanStart.get(folder)) || !entry.findings.some((finding) => finding.file === file)) {
       return false;
     }
     this.entries.set(folder, { ...entry, stale: new Set([...entry.stale, file]) });
@@ -92,12 +100,14 @@ export class ResultsStore {
   }
 
   clear(folder: string): void {
+    this.shownScanStart.delete(folder);
     if (this.entries.delete(folder)) {
       this.notify();
     }
   }
 
   clearAll(): void {
+    this.shownScanStart.clear();
     if (this.entries.size > 0) {
       this.entries.clear();
       this.notify();
@@ -110,6 +120,7 @@ export class ResultsStore {
     const removed = [...this.entries.keys()].filter((folder) => !kept.has(folder));
     for (const folder of removed) {
       this.entries.delete(folder);
+      this.shownScanStart.delete(folder);
     }
     if (removed.length > 0) {
       this.notify();
@@ -126,4 +137,8 @@ export class ResultsStore {
       listener();
     }
   }
+}
+
+function writtenBefore(writtenAt: number | undefined, scanStart: number | undefined): boolean {
+  return writtenAt !== undefined && scanStart !== undefined && writtenAt < scanStart;
 }

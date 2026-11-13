@@ -1,19 +1,34 @@
+import { stat } from "node:fs/promises";
 import * as vscode from "vscode";
 import { ResultsStore } from "./resultsStore";
-import { projectsByFile, watchRoots } from "./staleModel";
+import { latestWrite, projectsByFile, watchRoots } from "./staleModel";
 
 export function watchStaleFiles(store: ResultsStore, rootOf: (project: string) => string | undefined): vscode.Disposable {
   let watched = "";
   let watchers: vscode.Disposable[] = [];
   let index = new Map<string, string[]>();
-  const mark = (uri: vscode.Uri): void => {
+  let disposed = false;
+  const mark = (uri: vscode.Uri, writtenAt?: number): void => {
+    if (uri.scheme !== "file" || disposed) {
+      return;
+    }
+    store.noteChange(uri.fsPath, writtenAt);
+    for (const project of index.get(uri.fsPath) ?? []) {
+      store.markStale(project, uri.fsPath, writtenAt);
+    }
+  };
+  const markWritten = (uri: vscode.Uri): void => {
     if (uri.scheme !== "file") {
       return;
     }
-    store.noteChange(uri.fsPath);
-    for (const project of index.get(uri.fsPath) ?? []) {
-      store.markStale(project, uri.fsPath);
-    }
+    stat(uri.fsPath).then(
+      (stats) => {
+        mark(uri, latestWrite(stats.mtimeMs));
+      },
+      () => {
+        mark(uri);
+      },
+    );
   };
   const disposeWatchers = (): void => {
     watchers.forEach((watcher) => {
@@ -32,7 +47,9 @@ export function watchStaleFiles(store: ResultsStore, rootOf: (project: string) =
     disposeWatchers();
     watchers = roots.flatMap((root) => {
       const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(vscode.Uri.file(root.base), root.pattern), true, false, false);
-      return [watcher, watcher.onDidChange(mark), watcher.onDidDelete(mark)];
+      return [watcher, watcher.onDidChange(markWritten), watcher.onDidDelete((uri) => {
+        mark(uri);
+      })];
     });
   };
   const subscriptions = [
@@ -48,6 +65,7 @@ export function watchStaleFiles(store: ResultsStore, rootOf: (project: string) =
   ];
   return {
     dispose: () => {
+      disposed = true;
       disposeWatchers();
       subscriptions.forEach((subscription) => {
         subscription.dispose();
