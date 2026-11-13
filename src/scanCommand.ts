@@ -12,6 +12,7 @@ import { installHint } from "./optionsModel";
 import { projectArguments, readProjectFolder } from "./xcodeProject";
 import { ScanState } from "./scanState";
 import { probeVersion } from "./versionProbe";
+import { folderAliases } from "./realFolders";
 import { printsResultsWhenAsked } from "./version";
 
 export class Scanner {
@@ -121,7 +122,8 @@ export class Scanner {
       },
     );
     this.output.appendLine(exitDescription(run));
-    const findings = toFindings(interpretRun(run), cwd);
+    const aliases = await folderAliases([cwd, project.workspaceFolder.uri.fsPath]);
+    const findings = toFindings(interpretRun(run), cwd, aliases);
     this.store.set(project.key, findings, severity, Date.now());
     return findings.length;
   }

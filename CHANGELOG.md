@@ -16,6 +16,7 @@
 - **Project list**: an Xcode project or workspace added or removed, at the root of a workspace folder or one level below, and a sub-directory added or deleted as a whole, now update the list of projects, as `Package.swift` and the configuration files already did.
 - **Activation**: the extension starts with a workspace that holds an Xcode project or workspace by looking for the file inside it (`project.pbxproj`, `contents.xcworkspacedata`), since `workspaceContains` matches its glob patterns against files only and an Xcode project or workspace is a folder.
 - **Dependency directories**: `Pods`, `Carthage`, `vendor`, `Vendor` and `SourcePackages` are no longer offered as projects, like `node_modules`, `build` and `DerivedData` already.
+- **Symbolic links**: a project opened through a symbolic link, or under `/tmp` which macOS resolves to `/private/tmp`, has its diagnostics on the files open in the editor, and editing them marks their results stale: the real paths that outskirts prints are shown under the path the project is opened at.
 
 ## 0.1.0 (2026-11-13)
 
