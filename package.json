@@ -1,7 +1,7 @@
 {
   "name": "outskirts",
   "displayName": "outskirts",
-  "description": "Shows the unused Swift code found by the outskirts CLI as diagnostics.",
+  "description": "Finds unused Swift code with outskirts: results in a side bar and the Problems panel, per project, with a hand-off to a coding agent.",
   "version": "0.1.0",
   "publisher": "tiny-earth-moon",
   "license": "MIT",
