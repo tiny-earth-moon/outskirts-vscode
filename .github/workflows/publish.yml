@@ -3,8 +3,12 @@ name: Publish
 on:
   workflow_dispatch:
     inputs:
-      publish:
-        description: Publish to the marketplaces (unchecked only builds the .vsix)
+      marketplace:
+        description: Publish to the Visual Studio Marketplace
+        type: boolean
+        default: false
+      open-vsx:
+        description: Publish to Open VSX
         type: boolean
         default: false
 
@@ -34,7 +38,7 @@ jobs:
 
   marketplace:
     needs: package
-    if: inputs.publish && github.ref == 'refs/heads/main'
+    if: inputs.marketplace && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -53,7 +57,7 @@ jobs:
 
   open-vsx:
     needs: package
-    if: inputs.publish && github.ref == 'refs/heads/main'
+    if: inputs.open-vsx && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     permissions:
       contents: read
