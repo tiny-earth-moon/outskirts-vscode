@@ -10,6 +10,8 @@ import { Project } from "./project";
 import { scanSummary, sequenceSummary } from "./summary";
 import { installHint } from "./optionsModel";
 import { projectArguments, readProjectFolder } from "./xcodeProject";
+import { probeVersion } from "./versionProbe";
+import { printsResultsWhenAsked } from "./version";
 
 export class Scanner {
   private controller: AbortController | undefined;
@@ -83,9 +85,11 @@ export class Scanner {
     const executable = resolveExecutable(config.inspect<string>("path"));
     const cwd = project.uri.fsPath;
     const extra = config.get<string[]>("arguments", []);
+    const version = await probeVersion(executable);
     const args = buildScanArguments(extra, {
       skipBuild: config.get<boolean>("skipBuild", false),
       project: projectArguments(await readProjectFolder(cwd), extra),
+      printResults: version.state === "found" && printsResultsWhenAsked(version.version),
     });
     const severity = config.get<string>("severity", "warning");
     severityFromSetting(severity);

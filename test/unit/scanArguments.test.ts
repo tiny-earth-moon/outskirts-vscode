@@ -18,6 +18,15 @@ describe("buildScanArguments", () => {
   });
 });
 
+describe("buildScanArguments with an outskirts that can be told to print the results", () => {
+  it("asks for the results on stdout before the extra arguments, which keep the last word", () => {
+    assert.deepEqual(buildScanArguments(["--schemes", "App", "--", "-quiet"], { printResults: true }), [
+      "scan", "--format", "json", "--quiet", "--no-skip-stdout-results", "--schemes", "App", "--", "-quiet",
+    ]);
+    assert.equal(buildScanArguments([]).includes("--no-skip-stdout-results"), false);
+  });
+});
+
 describe("resolveExecutable", () => {
   it("ignores workspace values", () => {
     assert.equal(

@@ -42,6 +42,10 @@ describe("interpretRun", () => {
     );
   });
 
+  it("does not announce zero results when a successful scan prints nothing", () => {
+    assert.throws(() => interpretRun({ exitCode: 0, stdout: "", stderr: "" }), InvalidOutputError);
+  });
+
   it("reports invalid JSON on success explicitly", () => {
     assert.throws(() => interpretRun({ exitCode: 0, stdout: "nope", stderr: "" }), InvalidOutputError);
   });
