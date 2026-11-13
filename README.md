@@ -78,7 +78,7 @@ Settings are stored per workspace folder, so the projects found in the same fold
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `outskirts.path` | `outskirts` | Path of the executable (a leading `~` is the home folder), or its name on the PATH. |
+| `outskirts.path` | `outskirts` | Absolute path of the executable (a leading `~` is the home folder), or its name, looked up on the PATH and never in the project folder. |
 | `outskirts.arguments` | `[]` | Extra arguments for `outskirts scan`, e.g. `["--schemes", "App"]`, after the ones the extension passes (`--project`: see [Several projects](#several-projects)). |
 | `outskirts.skipBuild` | `false` | Reuse the existing index instead of building the project (`--skip-build`). |
 | `outskirts.severity` | `warning` | `error`, `warning`, `information` or `hint`. |

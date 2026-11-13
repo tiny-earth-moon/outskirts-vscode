@@ -1,12 +1,9 @@
 import { spawn } from "node:child_process";
 import { statSync } from "node:fs";
+import { currentSearchEnvironment, ExecutableNotFoundError, resolveOnPath, SearchEnvironment } from "./commandPath";
 import { ProcessRun } from "./outcome";
 
-export class ExecutableNotFoundError extends Error {
-  constructor(readonly executable: string) {
-    super(`The outskirts executable '${executable}' was not found.`);
-  }
-}
+export { ExecutableNotFoundError };
 
 export class WorkingDirectoryNotFoundError extends Error {
   constructor(readonly cwd: string) {
@@ -20,6 +17,7 @@ export interface RunOptions {
   cwd: string;
   signal: AbortSignal;
   onOutput: (text: string) => void;
+  search?: SearchEnvironment;
 }
 
 export function isDirectory(path: string): boolean {
@@ -32,7 +30,8 @@ export function isDirectory(path: string): boolean {
 
 export function runProcess(executable: string, args: string[], options: RunOptions): Promise<ProcessRun> {
   return new Promise((resolve, reject) => {
-    const child = spawn(executable, args, { cwd: options.cwd, signal: options.signal, shell: false, killSignal: "SIGTERM" });
+    const command = resolveOnPath(executable, options.search ?? currentSearchEnvironment());
+    const child = spawn(command, args, { cwd: options.cwd, signal: options.signal, shell: false, killSignal: "SIGTERM" });
     let stdout = "";
     let stderr = "";
     child.stdout.setEncoding("utf8").on("data", (chunk: string) => {
@@ -56,7 +55,7 @@ export function runProcess(executable: string, args: string[], options: RunOptio
         reject(new CancelledError("The scan was cancelled."));
         return;
       }
-      options.onOutput(`Read ${Buffer.byteLength(stdout)} bytes of results from stdout.\n`);
+      options.onOutput(`Read ${String(Buffer.byteLength(stdout))} bytes of results from stdout.\n`);
       resolve({ exitCode, signal, stdout, stderr });
     });
   });
