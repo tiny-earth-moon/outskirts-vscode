@@ -1,7 +1,7 @@
 import * as assert from "node:assert/strict";
 import { Finding } from "../../src/findings";
 import { ResultsStore } from "../../src/resultsStore";
-import { freshFindings, isStaleFinding, projectsByFile, watchRoots } from "../../src/staleModel";
+import { freshFindings, isStaleFinding, latestWrite, projectsByFile, watchRoots } from "../../src/staleModel";
 
 function finding(file: string, line: number): Finding {
   return { file, line, column: 0, kind: "function", name: "f()", code: "unused", message: "Unused" };
@@ -100,5 +100,10 @@ describe("stale results", () => {
     assert.deepEqual(index.get("/app/A.swift"), ["app", "other"]);
     assert.deepEqual(index.get("/app/B.swift"), ["app"]);
     assert.equal(index.get("/app/Gone.swift"), undefined);
+  });
+
+  it("dates a write by its modification time, or two seconds later when the file system keeps whole seconds", () => {
+    assert.equal(latestWrite(1_700_000_000_123.5), 1_700_000_000_123.5);
+    assert.equal(latestWrite(1_700_000_000_000), 1_700_000_002_000);
   });
 });

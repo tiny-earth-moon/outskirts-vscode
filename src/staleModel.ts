@@ -25,6 +25,12 @@ export function freshFindings(entry: FolderResults | undefined, findings: readon
   return findings.filter((finding) => entry?.stale.has(finding.file) !== true);
 }
 
+const coarsestTimestamp = 2000;
+
+export function latestWrite(modifiedMs: number): number {
+  return modifiedMs % 1000 === 0 ? modifiedMs + coarsestTimestamp : modifiedMs;
+}
+
 export interface WatchRoot {
   readonly base: string;
   readonly pattern: "**/*" | "*";
