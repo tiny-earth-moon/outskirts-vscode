@@ -6,6 +6,7 @@ async function main(): Promise<void> {
   const workspaces = [
     { suite: "scan", target: "test/integration/fixture-workspace" },
     { suite: "multiRoot", target: "test/integration/multi-root.code-workspace" },
+    { suite: "nested", target: "test/integration/fixture-parent" },
   ];
   for (const { suite, target } of workspaces) {
     await runTests({
