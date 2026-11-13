@@ -24,8 +24,17 @@
   "activationEvents": [
     "workspaceContains:Package.swift",
     "workspaceContains:*.xcodeproj",
+    "workspaceContains:*.xcworkspace",
+    "workspaceContains:project.yml",
     "workspaceContains:.outskirts.yml",
-    "workspaceContains:.periphery.yml"
+    "workspaceContains:.periphery.yml",
+    "workspaceContains:*/Package.swift",
+    "workspaceContains:*/*.xcodeproj",
+    "workspaceContains:*/*.xcworkspace",
+    "workspaceContains:*/project.yml",
+    "workspaceContains:*/.outskirts.yml",
+    "workspaceContains:*/.periphery.yml",
+    "onView:outskirts.results"
   ],
   "capabilities": {
     "untrustedWorkspaces": {
@@ -33,7 +42,8 @@
       "description": "A scan builds the project, so it only runs in a trusted workspace.",
       "restrictedConfigurations": [
         "outskirts.path",
-        "outskirts.arguments"
+        "outskirts.arguments",
+        "outskirts.skipBuild"
       ]
     }
   },
@@ -43,11 +53,94 @@
       {
         "command": "outskirts.scan",
         "title": "Scan",
-        "category": "outskirts"
+        "category": "outskirts",
+        "icon": "$(play)"
+      },
+      {
+        "command": "outskirts.scanView",
+        "title": "Scan",
+        "category": "outskirts",
+        "icon": "$(play)"
+      },
+      {
+        "command": "outskirts.scanFolder",
+        "title": "Scan This Project",
+        "category": "outskirts",
+        "icon": "$(play)"
+      },
+      {
+        "command": "outskirts.cancel",
+        "title": "Cancel Scan",
+        "category": "outskirts",
+        "icon": "$(debug-stop)"
       },
       {
         "command": "outskirts.clear",
         "title": "Clear Results",
+        "category": "outskirts",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "outskirts.clearFolder",
+        "title": "Clear This Project",
+        "category": "outskirts",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "outskirts.refresh",
+        "title": "Refresh Projects",
+        "category": "outskirts",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "outskirts.groupByFile",
+        "title": "Group by File",
+        "category": "outskirts",
+        "icon": "$(file)"
+      },
+      {
+        "command": "outskirts.groupByKind",
+        "title": "Group by Kind",
+        "category": "outskirts",
+        "icon": "$(list-tree)"
+      },
+      {
+        "command": "outskirts.scanOptions",
+        "title": "Show Scan Options",
+        "category": "outskirts",
+        "icon": "$(settings)"
+      },
+      {
+        "command": "outskirts.openSettings",
+        "title": "Open Settings",
+        "category": "outskirts",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "outskirts.scanCurrentFolder",
+        "title": "Scan",
+        "category": "outskirts",
+        "icon": "$(play)"
+      },
+      {
+        "command": "outskirts.selectFolder",
+        "title": "Select Project",
+        "category": "outskirts",
+        "icon": "$(root-folder)"
+      },
+      {
+        "command": "outskirts.editSeverity",
+        "title": "Change Severity",
+        "category": "outskirts"
+      },
+      {
+        "command": "outskirts.editArguments",
+        "title": "Edit Extra Arguments",
+        "category": "outskirts"
+      },
+      {
+        "command": "outskirts.toggleGroupBy",
+        "title": "Toggle Grouping",
         "category": "outskirts"
       }
     ],
@@ -80,8 +173,185 @@
           "default": "warning",
           "scope": "resource",
           "description": "Severity of the diagnostics reported by outskirts."
+        },
+        "outskirts.skipBuild": {
+          "type": "boolean",
+          "default": false,
+          "scope": "resource",
+          "description": "Reuse the existing index instead of building the project (passes `--skip-build`)."
         }
       }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "outskirts",
+          "title": "outskirts",
+          "icon": "images/activity.svg"
+        }
+      ]
+    },
+    "views": {
+      "outskirts": [
+        {
+          "id": "outskirts.results",
+          "name": "Results"
+        },
+        {
+          "id": "outskirts.options",
+          "name": "Scan Options",
+          "visibility": "collapsed",
+          "when": "outskirts.state != unavailable"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "outskirts.results",
+        "contents": "No Swift package or Xcode project in this workspace. Open a folder that holds Package.swift, an Xcode project or workspace, project.yml or .outskirts.yml at its root, or a folder of such projects.\n[Refresh](command:outskirts.refresh)",
+        "when": "outskirts.state == unavailable"
+      },
+      {
+        "view": "outskirts.results",
+        "contents": "Find the unused Swift code of this workspace with outskirts.\n[Scan](command:outskirts.scanView)",
+        "when": "outskirts.state == none && !outskirts.scanning"
+      },
+      {
+        "view": "outskirts.results",
+        "contents": "No unused code found.\n[Scan Again](command:outskirts.scanView)",
+        "when": "outskirts.state == empty && !outskirts.scanning"
+      },
+      {
+        "view": "outskirts.results",
+        "contents": "Scanning…\n[Cancel](command:outskirts.cancel)",
+        "when": "outskirts.scanning && outskirts.state != results"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "outskirts.scanView",
+          "when": "view == outskirts.results && !outskirts.scanning && outskirts.state != unavailable",
+          "group": "navigation@1"
+        },
+        {
+          "command": "outskirts.cancel",
+          "when": "view == outskirts.results && outskirts.scanning",
+          "group": "navigation@1"
+        },
+        {
+          "command": "outskirts.scanOptions",
+          "when": "view == outskirts.results",
+          "group": "navigation@2"
+        },
+        {
+          "command": "outskirts.groupByKind",
+          "when": "view == outskirts.results && outskirts.groupBy != kind",
+          "group": "navigation@3"
+        },
+        {
+          "command": "outskirts.groupByFile",
+          "when": "view == outskirts.results && outskirts.groupBy == kind",
+          "group": "navigation@3"
+        },
+        {
+          "command": "outskirts.clear",
+          "when": "view == outskirts.results && outskirts.state != none && outskirts.state != unavailable",
+          "group": "navigation@4"
+        },
+        {
+          "command": "outskirts.refresh",
+          "when": "view == outskirts.results",
+          "group": "navigation@5"
+        },
+        {
+          "command": "outskirts.openSettings",
+          "when": "view == outskirts.results",
+          "group": "9_settings"
+        },
+        {
+          "command": "outskirts.scanCurrentFolder",
+          "when": "view == outskirts.options && !outskirts.scanning",
+          "group": "navigation@1"
+        },
+        {
+          "command": "outskirts.cancel",
+          "when": "view == outskirts.options && outskirts.scanning",
+          "group": "navigation@1"
+        },
+        {
+          "command": "outskirts.selectFolder",
+          "when": "view == outskirts.options && outskirts.severalProjects",
+          "group": "navigation@2"
+        },
+        {
+          "command": "outskirts.openSettings",
+          "when": "view == outskirts.options",
+          "group": "navigation@3"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "outskirts.cancel",
+          "when": "outskirts.scanning"
+        },
+        {
+          "command": "outskirts.groupByFile",
+          "when": "outskirts.groupBy == kind"
+        },
+        {
+          "command": "outskirts.groupByKind",
+          "when": "outskirts.groupBy != kind"
+        },
+        {
+          "command": "outskirts.scanView",
+          "when": "false"
+        },
+        {
+          "command": "outskirts.scanFolder",
+          "when": "false"
+        },
+        {
+          "command": "outskirts.clearFolder",
+          "when": "false"
+        },
+        {
+          "command": "outskirts.scanCurrentFolder",
+          "when": "false"
+        },
+        {
+          "command": "outskirts.selectFolder",
+          "when": "false"
+        },
+        {
+          "command": "outskirts.editSeverity",
+          "when": "false"
+        },
+        {
+          "command": "outskirts.editArguments",
+          "when": "false"
+        },
+        {
+          "command": "outskirts.toggleGroupBy",
+          "when": "false"
+        },
+        {
+          "command": "outskirts.scanOptions",
+          "when": "outskirts.state != unavailable"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "outskirts.scanFolder",
+          "when": "view == outskirts.results && viewItem == folder && !outskirts.scanning",
+          "group": "inline@1"
+        },
+        {
+          "command": "outskirts.clearFolder",
+          "when": "view == outskirts.results && viewItem == folder",
+          "group": "inline@2"
+        }
+      ]
     }
   },
   "scripts": {

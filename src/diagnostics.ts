@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { Finding } from "./findings";
+import { ResultsStore } from "./resultsStore";
 
 const severities: Partial<Record<string, vscode.DiagnosticSeverity>> = {
   error: vscode.DiagnosticSeverity.Error,
@@ -16,12 +17,22 @@ export function severityFromSetting(value: string): vscode.DiagnosticSeverity {
   return severity;
 }
 
-export function showFindings(
-  collection: vscode.DiagnosticCollection,
-  findings: Finding[],
+export function bindDiagnostics(collection: vscode.DiagnosticCollection, store: ResultsStore): vscode.Disposable {
+  return store.onDidChange(() => {
+    const byFile = new Map<string, vscode.Diagnostic[]>();
+    for (const entry of store.all().values()) {
+      addFindings(byFile, entry.findings, severityFromSetting(entry.severity));
+    }
+    collection.clear();
+    collection.set([...byFile].map(([file, list]) => [vscode.Uri.file(file), list]));
+  });
+}
+
+function addFindings(
+  byFile: Map<string, vscode.Diagnostic[]>,
+  findings: readonly Finding[],
   severity: vscode.DiagnosticSeverity,
 ): void {
-  const byFile = new Map<string, vscode.Diagnostic[]>();
   for (const finding of findings) {
     const position = new vscode.Position(finding.line, finding.column);
     const diagnostic = new vscode.Diagnostic(new vscode.Range(position, position), finding.message, severity);
@@ -33,6 +44,4 @@ export function showFindings(
     list.push(diagnostic);
     byFile.set(finding.file, list);
   }
-  collection.clear();
-  collection.set([...byFile].map(([file, list]) => [vscode.Uri.file(file), list]));
 }

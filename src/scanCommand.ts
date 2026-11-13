@@ -1,59 +1,122 @@
 import * as vscode from "vscode";
-import { severityFromSetting, showFindings } from "./diagnostics";
+import { severityFromSetting } from "./diagnostics";
 import { toFindings } from "./findings";
-import { interpretRun, ScanFailedError } from "./outcome";
-import { pickFolder } from "./pickFolder";
+import { interpretRun } from "./outcome";
+import { ResultsStore } from "./resultsStore";
 import { CancelledError, ExecutableNotFoundError, runProcess } from "./runProcess";
 import { buildScanArguments } from "./scanArguments";
 import { resolveExecutable } from "./executable";
-import { scanSummary } from "./summary";
+import { Project } from "./project";
+import { scanSummary, sequenceSummary } from "./summary";
+import { installHint } from "./optionsModel";
 
-const installHint = "Install it with `brew install tiny-earth-moon/tap/outskirts` or set `outskirts.path`.";
+export class Scanner {
+  private controller: AbortController | undefined;
+  private cancelled = false;
+  private readonly runningChanged = new vscode.EventEmitter<boolean>();
+  readonly onDidChangeRunning = this.runningChanged.event;
+  private scanningKey: string | undefined;
 
-export async function scan(collection: vscode.DiagnosticCollection, output: vscode.OutputChannel): Promise<void> {
-  if (!vscode.workspace.isTrusted) {
-    void vscode.window.showErrorMessage("outskirts: a scan builds the project, so it only runs in a trusted workspace.");
-    return;
+  constructor(
+    private readonly store: ResultsStore,
+    private readonly output: vscode.OutputChannel,
+  ) {}
+
+  get running(): boolean {
+    return this.controller !== undefined;
   }
-  const folder = await pickFolder();
-  if (folder === undefined) {
-    return;
+
+  get scanning(): string | undefined {
+    return this.scanningKey;
   }
-  const config = vscode.workspace.getConfiguration("outskirts", folder.uri);
-  const executable = resolveExecutable(config.inspect<string>("path"));
-  const args = buildScanArguments(config.get<string[]>("arguments", []));
-  const cwd = folder.uri.fsPath;
-  try {
-    const severity = severityFromSetting(config.get<string>("severity", "warning"));
+
+  cancel(): void {
+    this.cancelled = true;
+    this.controller?.abort();
+  }
+
+  async scan(projects: readonly Project[]): Promise<void> {
+    if (this.running) {
+      void vscode.window.showWarningMessage("A scan is already running.");
+      return;
+    }
+    if (!vscode.workspace.isTrusted) {
+      void vscode.window.showErrorMessage("A scan builds the project, so it only runs in a trusted workspace.");
+      return;
+    }
+    this.cancelled = false;
+    const counts: number[] = [];
+    for (const project of projects) {
+      if (this.cancelled) {
+        break;
+      }
+      const controller = new AbortController();
+      this.setController(controller, project.key);
+      try {
+        counts.push(await this.run(project, controller));
+        if (projects.length === 1) {
+          void announce(scanSummary(counts[0], project.name), counts[0]);
+        }
+      } catch (error) {
+        if (error instanceof CancelledError) {
+          this.cancelled = true;
+        }
+        void report(error, this.output);
+      } finally {
+        this.setController(undefined, undefined);
+      }
+    }
+    if (projects.length > 1 && counts.length > 0) {
+      const total = counts.reduce((sum, count) => sum + count, 0);
+      void announce(sequenceSummary(counts), total);
+    }
+  }
+
+  dispose(): void {
+    this.cancel();
+    this.runningChanged.dispose();
+  }
+
+  private async run(project: Project, controller: AbortController): Promise<number> {
+    const config = vscode.workspace.getConfiguration("outskirts", project.workspaceFolder.uri);
+    const executable = resolveExecutable(config.inspect<string>("path"));
+    const args = buildScanArguments(config.get<string[]>("arguments", []), config.get<boolean>("skipBuild", false));
+    const cwd = project.uri.fsPath;
+    const severity = config.get<string>("severity", "warning");
+    severityFromSetting(severity);
+    const title = `Scanning ${project.name}`;
     const run = await vscode.window.withProgress(
-      { location: vscode.ProgressLocation.Notification, title: "outskirts: scanning", cancellable: true },
+      { location: vscode.ProgressLocation.Notification, title, cancellable: true },
       (_progress, token) => {
-        const controller = new AbortController();
         token.onCancellationRequested(() => {
-          controller.abort();
+          this.cancel();
         });
-        output.appendLine(`$ ${executable} ${args.join(" ")}  (in ${cwd})`);
+        this.output.appendLine(`$ ${executable} ${args.join(" ")}  (in ${cwd})`);
         return runProcess(executable, args, { cwd, signal: controller.signal, onOutput: (text) => {
-          output.append(text);
+          this.output.append(text);
         } });
       },
     );
-    output.appendLine(`outskirts exited with status ${String(run.exitCode)}.`);
+    this.output.appendLine(`outskirts exited with status ${String(run.exitCode)}.`);
     const findings = toFindings(interpretRun(run), cwd);
-    showFindings(collection, findings, severity);
-    void announce(findings.length);
-  } catch (error) {
-    await report(error, output);
+    this.store.set(project.key, findings, severity, Date.now());
+    return findings.length;
+  }
+
+  private setController(controller: AbortController | undefined, key: string | undefined): void {
+    this.controller = controller;
+    this.scanningKey = key;
+    this.runningChanged.fire(controller !== undefined);
   }
 }
 
-async function announce(count: number): Promise<void> {
+async function announce(message: string, count: number): Promise<void> {
   if (count === 0) {
-    void vscode.window.showInformationMessage(scanSummary(count));
+    void vscode.window.showInformationMessage(message);
     return;
   }
   const showProblems = "Show Problems";
-  const choice = await vscode.window.showInformationMessage(scanSummary(count), showProblems);
+  const choice = await vscode.window.showInformationMessage(message, showProblems);
   if (choice === showProblems) {
     await vscode.commands.executeCommand("workbench.actions.view.problems");
   }
@@ -70,8 +133,7 @@ async function report(error: unknown, output: vscode.OutputChannel): Promise<voi
     return;
   }
   const openOutput = "Open Output";
-  const detail = error instanceof ScanFailedError ? message : `outskirts: ${message}`;
-  const choice = await vscode.window.showErrorMessage(detail, openOutput);
+  const choice = await vscode.window.showErrorMessage(message, openOutput);
   if (choice === openOutput) {
     output.show();
   }

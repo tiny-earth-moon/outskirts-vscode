@@ -3,6 +3,8 @@ import { ScanResult } from "./results";
 
 export interface Finding extends SourcePosition {
   message: string;
+  kind: string;
+  name: string;
   code?: string;
 }
 
@@ -10,9 +12,15 @@ export function toFindings(results: ScanResult[], folder: string): Finding[] {
   return results.flatMap((result) => {
     const position = parseLocation(result.location, folder);
     if (result.hints.length === 0) {
-      return [{ ...position, message: `${kindName(result.kind)} '${result.name}'` }];
+      return [{ ...position, kind: kindName(result.kind), name: result.name, message: `${kindName(result.kind)} '${result.name}'` }];
     }
-    return result.hints.map((hint) => ({ ...position, code: hintName(hint), message: describe(result, hint) }));
+    return result.hints.map((hint) => ({
+      ...position,
+      kind: kindName(result.kind),
+      name: result.name,
+      code: hintName(hint),
+      message: describe(result, hint),
+    }));
   });
 }
 
@@ -21,9 +29,20 @@ function hintName(hint: string): string {
   return parenthesis === -1 ? hint : hint.slice(0, parenthesis);
 }
 
-function kindName(kind: string): string {
+const kindNames: Record<string, string> = {
+  module: "imported module",
+  enumelement: "enum case",
+  "function.constructor": "initializer",
+  "var.parameter": "parameter",
+  generic_type_param: "generic type parameter",
+  precedencegroup: "precedence group",
+  localized_string: "localized string",
+  metal_function: "Metal function",
+};
+
+export function kindName(kind: string): string {
   const [base] = kind.split(".");
-  return base === "var" ? "property" : base;
+  return kindNames[kind] ?? (base === "var" ? "property" : base);
 }
 
 function describe(result: ScanResult, hint: string): string {
