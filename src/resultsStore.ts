@@ -20,6 +20,7 @@ export class ResultsStore {
   private readonly entries = new Map<string, FolderResults>();
   private readonly listeners = new Set<() => void>();
   private known: ReadonlySet<string> | undefined;
+  private readonly changedDuringScan = new Map<string, Set<string>>();
 
   get(folder: string): FolderResults | undefined {
     return this.entries.get(folder);
@@ -41,9 +42,33 @@ export class ResultsStore {
     if (this.known !== undefined && !this.known.has(folder)) {
       return false;
     }
-    this.entries.set(folder, { findings, severity, scannedAt, stale: new Set() });
+    const changed = this.changedDuringScan.get(folder);
+    this.changedDuringScan.delete(folder);
+    const stale = new Set(findings.map((finding) => finding.file).filter((file) => changed?.has(file) === true));
+    this.entries.set(folder, { findings, severity, scannedAt, stale });
     this.notify();
     return true;
+  }
+
+  startScan(folder: string): void {
+    this.changedDuringScan.set(folder, new Set());
+    this.notify();
+  }
+
+  endScan(folder: string): void {
+    if (this.changedDuringScan.delete(folder)) {
+      this.notify();
+    }
+  }
+
+  get scanned(): readonly string[] {
+    return [...this.changedDuringScan.keys()];
+  }
+
+  noteChange(file: string): void {
+    for (const changed of this.changedDuringScan.values()) {
+      changed.add(file);
+    }
   }
 
   setSeverity(folder: string, severity: string): boolean {

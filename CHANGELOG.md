@@ -21,6 +21,7 @@
 - **Columns**: outskirts counts the column of a result in UTF-8 bytes, which the editor read as characters, so a result on a line with accented letters or emoji before the name opened past it. The column is now converted from the line of the file when the scan ends; the Problems panel, the side bar and Fix with Agent use the converted column.
 - **Severity**: changing `outskirts.severity`, in the settings or from the Scan Options view, updates the diagnostics already shown, instead of waiting for the next scan.
 - **Changes on disk**: one watcher per project replaces one per file with results, which were all recreated at each change; a file whose name holds `[`, `{`, `*` or `?`, read as a glob pattern until now, is followed too.
+- **Changes during a scan**: a file edited or changed on disk while its project is scanned has its results stale as soon as they arrive, instead of looking fresh.
 
 ## 0.1.0 (2026-11-13)
 

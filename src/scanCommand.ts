@@ -70,6 +70,7 @@ export class Scanner {
       async (project) => {
         const controller = new AbortController();
         this.controller = controller;
+        this.store.startScan(project.key);
         try {
           counts.push(await this.run(project, controller));
           if (projects.length === 1) {
@@ -81,6 +82,7 @@ export class Scanner {
           }
           void report(error, this.output);
         } finally {
+          this.store.endScan(project.key);
           this.controller = undefined;
           this.removed = undefined;
         }

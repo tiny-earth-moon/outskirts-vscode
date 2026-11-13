@@ -23,8 +23,12 @@ export interface WatchRoot {
   readonly pattern: "**/*" | "*";
 }
 
-export function watchRoots(results: ReadonlyMap<string, FolderResults>, rootOf: (project: string) => string | undefined): WatchRoot[] {
-  const recursive = new Set<string>();
+export function watchRoots(
+  results: ReadonlyMap<string, FolderResults>,
+  rootOf: (project: string) => string | undefined,
+  scanned: readonly string[] = [],
+): WatchRoot[] {
+  const recursive = new Set(scanned.map(rootOf).filter((root) => root !== undefined));
   const flat = new Set<string>();
   for (const [project, entry] of results) {
     const root = rootOf(project);

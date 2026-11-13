@@ -80,6 +80,10 @@ describe("stale results", () => {
     ]);
   });
 
+  it("watches a project while it is scanned, before it has results", () => {
+    assert.deepEqual(watchRoots(new ResultsStore().all(), (key) => (key === "app" ? "/app" : undefined), ["app", "gone"]), [{ base: "/app", pattern: "**/*" }]);
+  });
+
   it("indexes the projects of a changed or deleted file", () => {
     const index = projectsByFile(store().all());
     assert.deepEqual(index.get("/app/A.swift"), ["app", "other"]);

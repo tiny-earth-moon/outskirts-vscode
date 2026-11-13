@@ -67,6 +67,33 @@ describe("ResultsStore", () => {
     assert.equal(changes, 3);
   });
 
+  it("marks stale the results of the files changed while their scan ran", () => {
+    const store = new ResultsStore();
+    const other: Finding = { ...finding, file: "/a/B.swift" };
+    store.noteChange(finding.file);
+    store.startScan("a");
+    store.startScan("b");
+    assert.deepEqual(store.scanned, ["a", "b"]);
+    store.noteChange(finding.file);
+    store.noteChange("/a/.build/debug/A.o");
+    store.set("a", [finding, other], "warning", 1);
+    assert.deepEqual([...(store.get("a")?.stale ?? [])], [finding.file]);
+    store.endScan("b");
+    assert.deepEqual(store.scanned, []);
+    store.startScan("a");
+    store.set("a", [finding], "warning", 2);
+    assert.equal(store.get("a")?.stale.size, 0);
+  });
+
+  it("forgets the changes of a scan that ends without results", () => {
+    const store = new ResultsStore();
+    store.startScan("a");
+    store.noteChange(finding.file);
+    store.endScan("a");
+    store.set("a", [finding], "warning", 1);
+    assert.equal(store.get("a")?.stale.size, 0);
+  });
+
   it("derives the state of a folder", () => {
     assert.equal(resultsState(undefined), "none");
     assert.equal(resultsState({ findings: [], severity: "warning", scannedAt: 0, stale: new Set<string>() }), "empty");

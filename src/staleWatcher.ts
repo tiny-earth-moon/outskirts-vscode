@@ -10,6 +10,7 @@ export function watchStaleFiles(store: ResultsStore, rootOf: (project: string) =
     if (uri.scheme !== "file") {
       return;
     }
+    store.noteChange(uri.fsPath);
     for (const project of index.get(uri.fsPath) ?? []) {
       store.markStale(project, uri.fsPath);
     }
@@ -22,7 +23,7 @@ export function watchStaleFiles(store: ResultsStore, rootOf: (project: string) =
   };
   const rewatch = (): void => {
     index = projectsByFile(store.all());
-    const roots = watchRoots(store.all(), rootOf);
+    const roots = watchRoots(store.all(), rootOf, store.scanned);
     const key = roots.map((root) => `${root.pattern} ${root.base}`).join("\n");
     if (key === watched) {
       return;
