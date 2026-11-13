@@ -58,7 +58,7 @@ export function optionRows(snapshot: OptionsSnapshot): OptionRow[] {
     { id: "groupBy", label: "Group results", description: snapshot.groupBy === "kind" ? "by kind" : "by file", icon: "list-tree" },
     {
       id: "executable",
-      label: "outskirts",
+      label: "Executable",
       description: executableDescription(snapshot.executable, snapshot.version),
       icon: "terminal",
       tooltip: snapshot.version.state === "missing" ? installHint : "Open the settings of the extension.",

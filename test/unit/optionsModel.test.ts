@@ -14,7 +14,7 @@ const snapshot: OptionsSnapshot = {
 describe("optionRows", () => {
   it("lists the six options with their current values", () => {
     const rows = optionRows(snapshot);
-    assert.deepEqual(rows.map((row) => row.label), ["Reuse existing index", "Severity", "Extra arguments", "Group results", "outskirts", "Agent"]);
+    assert.deepEqual(rows.map((row) => row.label), ["Reuse existing index", "Severity", "Extra arguments", "Group results", "Executable", "Agent"]);
     assert.deepEqual(rows.map((row) => row.description), ["--skip-build", "warning", "none", "by file", "outskirts 3.24.0", "not set"]);
   });
 
