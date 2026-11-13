@@ -84,6 +84,7 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
     store.onDidChange(updateState),
     projects.onDidChange(() => {
       store.retain(projects.infos.map((folder) => folder.key));
+      scanner.cancelRemoved((key) => projects.find(key) !== undefined);
       updateState();
       statusBar.update();
     }),
