@@ -29,9 +29,20 @@ function hintName(hint: string): string {
   return parenthesis === -1 ? hint : hint.slice(0, parenthesis);
 }
 
-function kindName(kind: string): string {
+const kindNames: Record<string, string> = {
+  module: "imported module",
+  enumelement: "enum case",
+  "function.constructor": "initializer",
+  "var.parameter": "parameter",
+  generic_type_param: "generic type parameter",
+  precedencegroup: "precedence group",
+  localized_string: "localized string",
+  metal_function: "Metal function",
+};
+
+export function kindName(kind: string): string {
   const [base] = kind.split(".");
-  return base === "var" ? "property" : base;
+  return kindNames[kind] ?? (base === "var" ? "property" : base);
 }
 
 function describe(result: ScanResult, hint: string): string {
