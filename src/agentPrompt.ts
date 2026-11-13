@@ -9,6 +9,7 @@ export interface PromptInput {
   projectName: string;
   root: string;
   findings: readonly Finding[];
+  verify?: boolean;
 }
 
 const instructions = [
@@ -16,6 +17,13 @@ const instructions = [
   "- If a declaration turns out to be used (dynamically, from another target, by Interface Builder, through reflection, etc.), keep it and report it instead of removing it.",
   "- For redundant accessibility and the other hints, apply the minimal change the hint names instead of removing the declaration.",
   "- Do not edit generated files.",
+];
+
+const checkInstructions = [
+  "- Do not build the project or run its tests. Check each removal by searching the code for remaining uses, and end with a summary of what was removed, what was kept and why, and the command to run to verify.",
+];
+
+const verifyInstructions = [
   "- Afterwards, build the project or run its tests if there is a quick way to do so.",
   "- End with a summary of what you removed and what you kept, and why.",
 ];
@@ -31,6 +39,7 @@ export function buildPrompt(input: PromptInput, limit = maxPromptResults): strin
     `Remove the unused Swift code listed below, found by outskirts in the project ${sanitize(input.projectName)}.`,
     "",
     ...instructions,
+    ...(input.verify === true ? verifyInstructions : checkInstructions),
     "",
     "Results by file (paths relative to the project directory, then line:column):",
   ];

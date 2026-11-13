@@ -12,8 +12,12 @@ export function statusText(count: number): string {
   return count === 1 ? "1 result" : `${String(count)} results`;
 }
 
-export function statusTooltip(folders: readonly { name: string; count: number | undefined }[]): string {
+export function statusTooltip(folders: readonly { name: string; count: number | undefined; stale?: number }[]): string {
   return folders
-    .map((folder) => `${folder.name}: ${folder.count === undefined ? "not scanned" : statusText(folder.count)}`)
+    .map((folder) => {
+      const count = folder.count === undefined ? "not scanned" : statusText(folder.count);
+      const stale = (folder.stale ?? 0) > 0 ? ` · ${String(folder.stale)} to rescan` : "";
+      return `${folder.name}: ${count}${stale}`;
+    })
     .join("\n");
 }

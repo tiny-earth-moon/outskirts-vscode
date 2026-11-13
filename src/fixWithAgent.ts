@@ -8,7 +8,9 @@ import { launchInTerminal } from "./agentTerminal";
 import { TreeNode } from "./folderTree";
 import { pickOneProject } from "./pickFolder";
 import { ProjectList } from "./projectList";
+import { agentVerify } from "./agentVerify";
 import { ResultsStore } from "./resultsStore";
+import { freshFindings, staleScopeMessage } from "./staleModel";
 
 export function registerFixWithAgent(store: ResultsStore, projects: ProjectList, registry: AgentRegistry): vscode.Disposable[] {
   const scopeOf = async (node: TreeNode | undefined): Promise<FixScope | undefined> => {
@@ -34,6 +36,11 @@ export function registerFixWithAgent(store: ResultsStore, projects: ProjectList,
       void vscode.window.showInformationMessage("No results to fix: scan the project first.");
       return;
     }
+    const findings = freshFindings(store.get(scope.project), scope.findings);
+    if (findings.length === 0) {
+      void vscode.window.showInformationMessage(staleScopeMessage);
+      return;
+    }
     await registry.probeSelected();
     let status = registry.status();
     if (status.kind !== "ready") {
@@ -47,7 +54,7 @@ export function registerFixWithAgent(store: ResultsStore, projects: ProjectList,
       }
     }
     const root = project.uri.fsPath;
-    const prompt = fitPrompt({ projectName: project.name, root, findings: scope.findings });
+    const prompt = fitPrompt({ projectName: project.name, root, findings, verify: agentVerify() });
     launchInTerminal(launchRequest(status.agent, status.executable, prompt, root));
   };
   return [

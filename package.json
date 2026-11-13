@@ -45,7 +45,8 @@
         "outskirts.arguments",
         "outskirts.skipBuild",
         "outskirts.agent",
-        "outskirts.agentCommand"
+        "outskirts.agentCommand",
+        "outskirts.agentVerify"
       ]
     }
   },
@@ -236,6 +237,12 @@
           "default": [],
           "scope": "machine",
           "markdownDescription": "Command of the custom agent (`outskirts.agent` set to `custom`): the executable first, then its arguments, with `${prompt}` as one whole argument, e.g. `[\"my-agent\", \"--interactive\", \"${prompt}\"]`. No shell is used."
+        },
+        "outskirts.agentVerify": {
+          "type": "boolean",
+          "default": false,
+          "scope": "machine",
+          "markdownDescription": "Lets the agent of **Fix with Agent** build the project or run its tests after its changes. Off: it checks each removal by searching the code and ends with the command to run to verify."
         }
       }
     },

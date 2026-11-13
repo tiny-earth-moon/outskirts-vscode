@@ -26,14 +26,17 @@ The output of outskirts is written to the "outskirts" output channel.
 
 The outskirts icon in the activity bar opens the results, grouped by file or by kind of finding with their counts; clicking a result opens its location. The title bar of the view has buttons to scan, cancel, show the options, switch the grouping, clear the results, refresh the projects and open the settings. After a scan, the status bar shows the number of results; clicking it shows the view.
 
+When a file with results changes after the scan, in the editor or on disk (for example by an agent), its results are stale: their diagnostics leave the Problems panel since they may point at the wrong lines, the file is marked "changed since scan" and its results "stale" in the tree, and the project and the status bar tell how many files are to rescan. Stale results are left out of Fix with Agent. Nothing is rescanned automatically, since a scan builds the project: scan again to refresh them.
+
 Below the results, the collapsible **Scan Options** section shows the options of a project with their current values:
 
 - **Reuse existing index**: a checkbox that scans without building, on the index of the last build (`--skip-build`).
 - **Severity**: click to pick the severity of the diagnostics.
 - **Extra arguments**: click to edit them, quoted like in a shell; no shell is used.
 - **Group results**: click to switch between grouping by file and by kind.
-- **outskirts**: the executable and its version, or "not found"; click to open the settings.
+- **Executable**: the executable and its version, or "not found"; click to open the settings.
 - **Agent**: the coding agent that Fix with Agent starts, "not set", or "(not installed)"; click to choose it.
+- **Agent verifies by building**: a checkbox (user setting `outskirts.agentVerify`, off by default) that lets the agent build the project or run its tests after its changes; off, it only searches the code for remaining uses and ends with the command to run to verify.
 
 Its title bar has buttons to scan the project with these options and to open the settings. With several projects, the view names the project it shows, follows the project last scanned or selected in the results, and has a button to select another project.
 
@@ -41,7 +44,7 @@ Its title bar has buttons to scan the project with these options and to open the
 
 **Fix with Agent** starts a coding agent of your choice in a terminal, in the project directory, with a prompt that asks it to remove the unused code that outskirts found. The button is on each project, file and result of the Results view (it sends the results of that project, that file, or that single result), and in the title bar of the view and the command palette, where it takes the project with results, or asks which one.
 
-The prompt is built from the results of the last scan, without scanning again. It tells the agent to change nothing else, to keep and report a declaration that turns out to be used (dynamically, from another target, by Interface Builder…), to apply the minimal change that a hint such as redundant accessibility names, not to edit generated files, to build or run the tests if there is a quick way to, and to end with a summary of what it removed and kept. Then it lists the results by file, with paths relative to the project directory, one line per result: `line:column  kind name — hint`. At most 200 results are listed, fewer if the prompt would exceed 100 000 bytes; the prompt says how many were left out.
+The prompt is built from the results of the last scan, without scanning again. It tells the agent to change nothing else, to keep and report a declaration that turns out to be used (dynamically, from another target, by Interface Builder…), to apply the minimal change that a hint such as redundant accessibility names, not to edit generated files, and not to build or run the tests but to check each removal by searching the code, ending with a summary of what it removed and kept and the command to run to verify; with `outskirts.agentVerify` on, it builds or runs the tests instead if there is a quick way to. Then it lists the results by file, with paths relative to the project directory, one line per result: `line:column  kind name — hint`. At most 200 results are listed, fewer if the prompt would exceed 100 000 bytes; the prompt says how many were left out.
 
 The agent edits the files; review its changes as you would any other. Nothing reads the agent's output: when it is done, scan again by hand to see what is left.
 
@@ -79,8 +82,9 @@ Settings are stored per workspace folder, so the projects found in the same fold
 | `outskirts.severity` | `warning` | `error`, `warning`, `information` or `hint`. |
 | `outskirts.agent` | empty | Agent started by Fix with Agent: `claude`, `copilot`, `codex`, `gemini`, `cursor`, or `custom`; empty asks. |
 | `outskirts.agentCommand` | `[]` | Command of the custom agent, with `${prompt}` as one whole argument. |
+| `outskirts.agentVerify` | `false` | Lets the agent build the project or run its tests after its changes. |
 
-A scan builds the project and an agent edits it, so both only run in a trusted workspace, and `outskirts.path`, `outskirts.agent` and `outskirts.agentCommand` are read from user or machine settings only, never from a workspace.
+A scan builds the project and an agent edits it, so both only run in a trusted workspace, and `outskirts.path`, `outskirts.agent`, `outskirts.agentCommand` and `outskirts.agentVerify` are read from user or machine settings only, never from a workspace.
 
 ## Known limits
 

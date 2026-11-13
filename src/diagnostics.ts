@@ -21,7 +21,7 @@ export function bindDiagnostics(collection: vscode.DiagnosticCollection, store: 
   return store.onDidChange(() => {
     const byFile = new Map<string, vscode.Diagnostic[]>();
     for (const entry of store.all().values()) {
-      addFindings(byFile, entry.findings, severityFromSetting(entry.severity));
+      addFindings(byFile, entry.findings.filter((finding) => !entry.stale.has(finding.file)), severityFromSetting(entry.severity));
     }
     collection.clear();
     collection.set([...byFile].map(([file, list]) => [vscode.Uri.file(file), list]));

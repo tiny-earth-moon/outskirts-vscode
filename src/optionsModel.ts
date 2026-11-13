@@ -14,9 +14,10 @@ export interface OptionsSnapshot {
   executable: string;
   version: ExecutableVersion;
   agent: AgentStatus;
+  agentVerify: boolean;
 }
 
-export type OptionId = "skipBuild" | "severity" | "arguments" | "groupBy" | "executable" | "agent";
+export type OptionId = "skipBuild" | "severity" | "arguments" | "groupBy" | "executable" | "agent" | "agentVerify";
 
 export interface OptionRow {
   id: OptionId;
@@ -58,12 +59,20 @@ export function optionRows(snapshot: OptionsSnapshot): OptionRow[] {
     { id: "groupBy", label: "Group results", description: snapshot.groupBy === "kind" ? "by kind" : "by file", icon: "list-tree" },
     {
       id: "executable",
-      label: "outskirts",
+      label: "Executable",
       description: executableDescription(snapshot.executable, snapshot.version),
       icon: "terminal",
       tooltip: snapshot.version.state === "missing" ? installHint : "Open the settings of the extension.",
     },
     { id: "agent", label: "Agent", description: agentDescription(snapshot.agent), icon: "sparkle", tooltip: agentTooltip(snapshot.agent) },
+    {
+      id: "agentVerify",
+      label: "Agent verifies by building",
+      description: "",
+      icon: "tools",
+      tooltip: "Lets the agent build the project or run its tests after its changes; otherwise it only searches the code.",
+      checked: snapshot.agentVerify,
+    },
   ];
 }
 

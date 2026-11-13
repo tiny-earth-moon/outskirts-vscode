@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { setAgentVerify } from "./agentVerify";
 import { AgentRegistry } from "./agentRegistry";
 import { CurrentFolder } from "./currentFolder";
 import { editArguments, editSeverity, setSkipBuild } from "./editOptions";
@@ -70,6 +71,8 @@ export function createOptionsView(
     const target = project();
     if (row.id === "skipBuild" && target !== undefined) {
       await setSkipBuild(target.workspaceFolder, checked);
+    } else if (row.id === "agentVerify") {
+      await setAgentVerify(checked);
     }
   };
   current.setFolders(projects.projects.map((entry) => entry.key));

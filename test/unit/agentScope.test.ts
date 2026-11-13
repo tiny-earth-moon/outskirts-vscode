@@ -11,8 +11,8 @@ function finding(file: string, line: number): Finding {
 
 const appFindings = [finding("/app/A.swift", 1), finding("/app/B.swift", 2), finding("/app/B.swift", 5)];
 const results = new Map<string, FolderResults>([
-  ["file:///app", { findings: appFindings, severity: "warning", scannedAt: 0 }],
-  ["file:///library", { findings: [], severity: "warning", scannedAt: 0 }],
+  ["file:///app", { findings: appFindings, severity: "warning", scannedAt: 0, stale: new Set<string>() }],
+  ["file:///library", { findings: [], severity: "warning", scannedAt: 0, stale: new Set<string>() }],
 ]);
 
 describe("nodeScope", () => {

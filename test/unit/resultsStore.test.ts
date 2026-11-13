@@ -10,7 +10,7 @@ describe("ResultsStore", () => {
     store.set("a", [finding], "warning", 1);
     store.set("b", [], "error", 2);
     store.set("b", [finding, finding], "error", 3);
-    assert.deepEqual(store.get("a"), { findings: [finding], severity: "warning", scannedAt: 1 });
+    assert.deepEqual(store.get("a"), { findings: [finding], severity: "warning", scannedAt: 1, stale: new Set<string>() });
     assert.equal(store.get("b")?.findings.length, 2);
     assert.equal(store.total, 3);
   });
@@ -40,7 +40,7 @@ describe("ResultsStore", () => {
 
   it("derives the state of a folder", () => {
     assert.equal(resultsState(undefined), "none");
-    assert.equal(resultsState({ findings: [], severity: "warning", scannedAt: 0 }), "empty");
-    assert.equal(resultsState({ findings: [finding], severity: "warning", scannedAt: 0 }), "results");
+    assert.equal(resultsState({ findings: [], severity: "warning", scannedAt: 0, stale: new Set<string>() }), "empty");
+    assert.equal(resultsState({ findings: [finding], severity: "warning", scannedAt: 0, stale: new Set<string>() }), "results");
   });
 });
