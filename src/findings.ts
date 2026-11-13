@@ -3,6 +3,8 @@ import { ScanResult } from "./results";
 
 export interface Finding extends SourcePosition {
   message: string;
+  kind: string;
+  name: string;
   code?: string;
 }
 
@@ -10,9 +12,15 @@ export function toFindings(results: ScanResult[], folder: string): Finding[] {
   return results.flatMap((result) => {
     const position = parseLocation(result.location, folder);
     if (result.hints.length === 0) {
-      return [{ ...position, message: `${kindName(result.kind)} '${result.name}'` }];
+      return [{ ...position, kind: kindName(result.kind), name: result.name, message: `${kindName(result.kind)} '${result.name}'` }];
     }
-    return result.hints.map((hint) => ({ ...position, code: hintName(hint), message: describe(result, hint) }));
+    return result.hints.map((hint) => ({
+      ...position,
+      kind: kindName(result.kind),
+      name: result.name,
+      code: hintName(hint),
+      message: describe(result, hint),
+    }));
   });
 }
 

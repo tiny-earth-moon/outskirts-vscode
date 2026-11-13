@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { Finding } from "./findings";
+import { ResultsStore } from "./resultsStore";
 
 const severities: Partial<Record<string, vscode.DiagnosticSeverity>> = {
   error: vscode.DiagnosticSeverity.Error,
@@ -16,9 +17,19 @@ export function severityFromSetting(value: string): vscode.DiagnosticSeverity {
   return severity;
 }
 
-export function showFindings(
+export function bindDiagnostics(collection: vscode.DiagnosticCollection, store: ResultsStore): vscode.Disposable {
+  return store.onDidChange(() => {
+    if (store.state === "none") {
+      collection.clear();
+    } else {
+      showFindings(collection, store.findings, severityFromSetting(store.severity));
+    }
+  });
+}
+
+function showFindings(
   collection: vscode.DiagnosticCollection,
-  findings: Finding[],
+  findings: readonly Finding[],
   severity: vscode.DiagnosticSeverity,
 ): void {
   const byFile = new Map<string, vscode.Diagnostic[]>();

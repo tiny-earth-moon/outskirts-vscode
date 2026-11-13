@@ -14,6 +14,8 @@ describe("toFindings", () => {
         file: path.resolve("/work/pkg", "Sources/Demo/main.swift"),
         line: 2,
         column: 5,
+        kind: "function",
+        name: "unusedHelper()",
         code: "unused",
         message: "Unused function 'unusedHelper()'",
       },
