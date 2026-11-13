@@ -49,7 +49,7 @@ export class ResultsTreeProvider implements vscode.TreeDataProvider<ResultNode> 
       item.id = `folder:${node.key}`;
       item.description = node.description;
       item.tooltip = node.root;
-      item.contextValue = "folder";
+      item.contextValue = (this.store.get(node.key)?.findings.length ?? 0) > 0 ? "folder.results" : "folder";
       item.iconPath = vscode.ThemeIcon.Folder;
       item.resourceUri = vscode.Uri.parse(node.key);
       return item;
@@ -61,6 +61,7 @@ export class ResultsTreeProvider implements vscode.TreeDataProvider<ResultNode> 
       item.iconPath = this.mode === "file" ? vscode.ThemeIcon.File : new vscode.ThemeIcon("symbol-misc");
       if (this.mode === "file") {
         item.resourceUri = vscode.Uri.file(node.key);
+        item.contextValue = "fileGroup";
       }
       return item;
     }
@@ -68,6 +69,7 @@ export class ResultsTreeProvider implements vscode.TreeDataProvider<ResultNode> 
     item.description = leafDescription(node, this.mode);
     item.tooltip = node.message;
     item.iconPath = new vscode.ThemeIcon("warning");
+    item.contextValue = "result";
     const position = new vscode.Position(node.line, node.column);
     item.command = {
       command: "vscode.open",

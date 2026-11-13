@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { AgentRegistry } from "./agentRegistry";
 import { CurrentFolder } from "./currentFolder";
 import { editArguments, editSeverity, setSkipBuild } from "./editOptions";
 import { OptionRow, optionsDescription } from "./optionsModel";
@@ -22,13 +23,14 @@ export function createOptionsView(
   projects: ProjectList,
   scanner: Scanner,
   groupBy: { get: () => GroupBy; set: (mode: GroupBy) => void },
+  agents: AgentRegistry,
 ): OptionsView {
   const current = new CurrentFolder();
   const project = (): Project | undefined => {
     const key = current.current;
     return key === undefined ? undefined : projects.find(key);
   };
-  const tree = new OptionsTreeProvider(() => project()?.workspaceFolder, groupBy.get);
+  const tree = new OptionsTreeProvider(() => project()?.workspaceFolder, groupBy.get, () => agents.status());
   const view = vscode.window.createTreeView("outskirts.options", { treeDataProvider: tree });
   const refresh = (): void => {
     const shown = project();
@@ -91,6 +93,9 @@ export function createOptionsView(
       } else if (event.affectsConfiguration("outskirts")) {
         tree.refresh();
       }
+    }),
+    agents.onDidChange(() => {
+      tree.refresh();
     }),
     view.onDidChangeCheckboxState(async (event) => {
       for (const [row, state] of event.items) {

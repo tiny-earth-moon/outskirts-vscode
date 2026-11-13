@@ -17,6 +17,8 @@ outskirts installed, e.g. `brew install tiny-earth-moon/tap/outskirts`, and a pr
 - **outskirts: Show Scan Options** opens the Scan Options view of the side bar; with several projects it first asks which project to show.
 - **outskirts: Group by File** / **Group by Kind** change how the side bar groups the results.
 - **outskirts: Open Settings** shows the settings of the extension.
+- **outskirts: Fix with Agent** hands the results to a coding agent; see [Fix with an agent](#fix-with-an-agent).
+- **outskirts: Select Agent** chooses that agent.
 
 The output of outskirts is written to the "outskirts" output channel.
 
@@ -31,8 +33,33 @@ Below the results, the collapsible **Scan Options** section shows the options of
 - **Extra arguments**: click to edit them, quoted like in a shell; no shell is used.
 - **Group results**: click to switch between grouping by file and by kind.
 - **outskirts**: the executable and its version, or "not found"; click to open the settings.
+- **Agent**: the coding agent that Fix with Agent starts, "not set", or "(not installed)"; click to choose it.
 
 Its title bar has buttons to scan the project with these options and to open the settings. With several projects, the view names the project it shows, follows the project last scanned or selected in the results, and has a button to select another project.
+
+## Fix with an agent
+
+**Fix with Agent** starts a coding agent of your choice in a terminal, in the project directory, with a prompt that asks it to remove the unused code that outskirts found. The button is on each project, file and result of the Results view (it sends the results of that project, that file, or that single result), and in the title bar of the view and the command palette, where it takes the project with results, or asks which one.
+
+The prompt is built from the results of the last scan, without scanning again. It tells the agent to change nothing else, to keep and report a declaration that turns out to be used (dynamically, from another target, by Interface Builder…), to apply the minimal change that a hint such as redundant accessibility names, not to edit generated files, to build or run the tests if there is a quick way to, and to end with a summary of what it removed and kept. Then it lists the results by file, with paths relative to the project directory, one line per result: `line:column  kind name — hint`. At most 200 results are listed, fewer if the prompt would exceed 100 000 bytes; the prompt says how many were left out.
+
+The agent edits the files; review its changes as you would any other. Nothing reads the agent's output: when it is done, scan again by hand to see what is left.
+
+The agent is chosen once, from the **Agent** row of Scan Options or **outskirts: Select Agent**, among the known agents found on the PATH:
+
+| Agent | Command started |
+|-------|-----------------|
+| Claude Code | `claude <prompt>` |
+| GitHub Copilot CLI | `copilot -i <prompt>` |
+| Codex CLI | `codex <prompt>` |
+| Gemini CLI | `gemini -i <prompt>` |
+| Cursor Agent | `cursor-agent <prompt>` |
+
+An agent found on the PATH is checked with `<agent> --version` when the list opens and before it starts, once per session (again after **Refresh**); one that does not run, such as a launcher left by another tool, is listed as not available and reads "(not installed)".
+
+**Custom command…** uses `outskirts.agentCommand` instead, e.g. `["my-agent", "--interactive", "${prompt}"]`: the executable first, an absolute path or a name on the PATH, and `${prompt}` once, as a whole argument. If no agent is set, or the one set is not installed, Fix with Agent asks first.
+
+The executable is started directly as the process of the terminal, with the prompt as one argument: no shell reads the command or the prompt, and control characters are stripped from the names and paths it holds. The agent settings are read from user settings only, never from a workspace, and an agent only starts in a trusted workspace.
 
 ## Several projects
 
@@ -50,8 +77,10 @@ Settings are stored per workspace folder, so the projects found in the same fold
 | `outskirts.arguments` | `[]` | Extra arguments for `outskirts scan`, e.g. `["--schemes", "App"]`. |
 | `outskirts.skipBuild` | `false` | Reuse the existing index instead of building the project (`--skip-build`). |
 | `outskirts.severity` | `warning` | `error`, `warning`, `information` or `hint`. |
+| `outskirts.agent` | empty | Agent started by Fix with Agent: `claude`, `copilot`, `codex`, `gemini`, `cursor`, or `custom`; empty asks. |
+| `outskirts.agentCommand` | `[]` | Command of the custom agent, with `${prompt}` as one whole argument. |
 
-A scan builds the project, so it only runs in a trusted workspace, and `outskirts.path` is read from user or machine settings only, never from a workspace.
+A scan builds the project and an agent edits it, so both only run in a trusted workspace, and `outskirts.path`, `outskirts.agent` and `outskirts.agentCommand` are read from user or machine settings only, never from a workspace.
 
 ## Known limits
 

@@ -8,13 +8,22 @@ const snapshot: OptionsSnapshot = {
   groupBy: "file",
   executable: "outskirts",
   version: { state: "found", version: "3.24.0" },
+  agent: { kind: "none" },
 };
 
 describe("optionRows", () => {
-  it("lists the five options with their current values", () => {
+  it("lists the six options with their current values", () => {
     const rows = optionRows(snapshot);
-    assert.deepEqual(rows.map((row) => row.label), ["Reuse existing index", "Severity", "Extra arguments", "Group results", "outskirts"]);
-    assert.deepEqual(rows.map((row) => row.description), ["--skip-build", "warning", "none", "by file", "outskirts 3.24.0"]);
+    assert.deepEqual(rows.map((row) => row.label), ["Reuse existing index", "Severity", "Extra arguments", "Group results", "outskirts", "Agent"]);
+    assert.deepEqual(rows.map((row) => row.description), ["--skip-build", "warning", "none", "by file", "outskirts 3.24.0", "not set"]);
+  });
+
+  it("names the selected agent and says when it is not installed", () => {
+    const agent = { id: "claude", name: "Claude Code", executable: "claude", args: ["${prompt}"] };
+    assert.equal(optionRows({ ...snapshot, agent: { kind: "ready", agent, executable: "/bin/claude" } })[5].description, "Claude Code");
+    const missing = optionRows({ ...snapshot, agent: { kind: "missing", agent } })[5];
+    assert.equal(missing.description, "Claude Code (not installed)");
+    assert.equal(missing.tooltip, "claude was not found on the PATH. Click to choose another agent.");
   });
 
   it("checks the index row only when skipBuild is set", () => {

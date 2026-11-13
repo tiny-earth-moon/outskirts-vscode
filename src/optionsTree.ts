@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { AgentStatus } from "./agentStatus";
 import { resolveExecutable } from "./executable";
 import { ExecutableVersion, OptionRow, optionRows } from "./optionsModel";
 import { GroupBy } from "./treeModel";
@@ -8,6 +9,7 @@ const commands: Partial<Record<OptionRow["id"], string>> = {
   arguments: "outskirts.editArguments",
   groupBy: "outskirts.toggleGroupBy",
   executable: "outskirts.openSettings",
+  agent: "outskirts.pickAgent",
 };
 
 export class OptionsTreeProvider implements vscode.TreeDataProvider<OptionRow> {
@@ -18,6 +20,7 @@ export class OptionsTreeProvider implements vscode.TreeDataProvider<OptionRow> {
   constructor(
     private readonly folder: () => vscode.WorkspaceFolder | undefined,
     private readonly groupBy: () => GroupBy,
+    private readonly agent: () => AgentStatus,
   ) {}
 
   refresh(): void {
@@ -37,6 +40,7 @@ export class OptionsTreeProvider implements vscode.TreeDataProvider<OptionRow> {
       groupBy: this.groupBy(),
       executable: executableName(),
       version: this.version,
+      agent: this.agent(),
     });
   }
 
