@@ -1,6 +1,8 @@
 import * as vscode from "vscode";
+import { AgentRegistry } from "./agentRegistry";
 import { bindDiagnostics } from "./diagnostics";
 import { FolderNode, viewState } from "./folderModel";
+import { registerFixWithAgent } from "./fixWithAgent";
 import { isFolderNode } from "./folderTree";
 import { OptionsView, createOptionsView } from "./optionsView";
 import { pickScanTargets } from "./pickFolder";
@@ -16,6 +18,7 @@ export interface OutskirtsApi {
   readonly tree: ResultsTreeProvider;
   readonly ready: Promise<void>;
   readonly options: OptionsView;
+  readonly agents: AgentRegistry;
 }
 
 type FolderTarget = FolderNode | vscode.Uri;
@@ -25,6 +28,7 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
   const output = vscode.window.createOutputChannel("outskirts");
   const store = new ResultsStore();
   const projects = new ProjectList();
+  const agents = new AgentRegistry();
   const scanner = new Scanner(store, output);
   const tree = new ResultsTreeProvider(store, () => projects.infos, () => scanner.scanning);
   const statusBar = createStatusBar(store, scanner, () => projects.infos);
@@ -36,10 +40,11 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
     setContext("groupBy", mode);
     options.refresh();
   };
-  const options = createOptionsView(projects, scanner, { get: () => tree.groupBy, set: groupBy });
+  const options = createOptionsView(projects, scanner, { get: () => tree.groupBy, set: groupBy }, agents);
   const resultsView = vscode.window.createTreeView("outskirts.results", { treeDataProvider: tree, showCollapseAll: true });
   const updateState = (): void => {
     setContext("state", viewState(projects.infos, store.all()));
+    setContext("hasResults", store.total > 0);
     tree.refresh();
   };
   const target = (node: FolderTarget | undefined): Project | undefined => {
@@ -81,6 +86,8 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
       tree.refresh();
     }),
     options,
+    agents,
+    ...registerFixWithAgent(store, projects, agents),
     resultsView,
     resultsView.onDidChangeSelection((event) => {
       const node = event.selection.at(0);
@@ -119,7 +126,7 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
       vscode.commands.executeCommand("workbench.action.openSettings", "@ext:tiny-earth-moon.outskirts"),
     ),
   );
-  return { tree, ready, options };
+  return { tree, ready, options, agents };
 }
 
 export function deactivate(): void {}

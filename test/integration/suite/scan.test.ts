@@ -3,6 +3,7 @@ import * as path from "node:path";
 import * as vscode from "vscode";
 import type { ResultGroup } from "../../../src/treeModel";
 import { activateWithFake, root } from "./activate";
+import { describeFixWithAgent } from "./fixWithAgent";
 
 const fake = path.join(root, "test/integration/fake-outskirts");
 
@@ -39,8 +40,8 @@ describe("outskirts.scan", () => {
     await options.probed();
     const rows = options.tree.getChildren();
     const items = rows.map((row) => options.tree.getTreeItem(row));
-    assert.deepEqual(items.map((item) => item.label), ["Reuse existing index", "Severity", "Extra arguments", "Group results", "outskirts"]);
-    assert.deepEqual(items.map((item) => item.description), ["--skip-build", "warning", "none", "by file", `${fake} 3.24.0`]);
+    assert.deepEqual(items.map((item) => item.label), ["Reuse existing index", "Severity", "Extra arguments", "Group results", "outskirts", "Agent"]);
+    assert.deepEqual(items.map((item) => item.description), ["--skip-build", "warning", "none", "by file", `${fake} 3.24.0`, "not set"]);
     assert.equal(items[0].checkboxState, vscode.TreeItemCheckboxState.Unchecked);
 
     const [folder] = vscode.workspace.workspaceFolders ?? [];
@@ -56,3 +57,5 @@ describe("outskirts.scan", () => {
     }
   });
 });
+
+describeFixWithAgent();

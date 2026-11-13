@@ -1,3 +1,4 @@
+import { AgentStatus, agentDescription, agentTooltip } from "./agentStatus";
 import { joinArguments } from "./tokenize";
 import { GroupBy } from "./treeModel";
 
@@ -12,9 +13,10 @@ export interface OptionsSnapshot {
   groupBy: GroupBy;
   executable: string;
   version: ExecutableVersion;
+  agent: AgentStatus;
 }
 
-export type OptionId = "skipBuild" | "severity" | "arguments" | "groupBy" | "executable";
+export type OptionId = "skipBuild" | "severity" | "arguments" | "groupBy" | "executable" | "agent";
 
 export interface OptionRow {
   id: OptionId;
@@ -61,6 +63,7 @@ export function optionRows(snapshot: OptionsSnapshot): OptionRow[] {
       icon: "terminal",
       tooltip: snapshot.version.state === "missing" ? installHint : "Open the settings of the extension.",
     },
+    { id: "agent", label: "Agent", description: agentDescription(snapshot.agent), icon: "sparkle", tooltip: agentTooltip(snapshot.agent) },
   ];
 }
 

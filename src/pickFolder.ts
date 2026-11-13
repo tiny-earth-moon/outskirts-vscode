@@ -23,11 +23,14 @@ export async function pickScanTargets(
   return picked?.projects;
 }
 
-export async function pickOneProject(projects: readonly Project[]): Promise<Project | undefined> {
+export async function pickOneProject(
+  projects: readonly Project[],
+  placeholder = "Project whose scan options to show",
+): Promise<Project | undefined> {
   if (projects.length <= 1) {
     return single(projects)?.[0];
   }
-  const picked = await choose(projects.map(item), "Project whose scan options to show", undefined);
+  const picked = await choose(projects.map(item), placeholder, undefined);
   return picked?.projects[0];
 }
 

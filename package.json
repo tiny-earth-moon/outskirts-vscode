@@ -39,11 +39,13 @@
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": "limited",
-      "description": "A scan builds the project, so it only runs in a trusted workspace.",
+      "description": "A scan builds the project and an agent edits it, so both only run in a trusted workspace.",
       "restrictedConfigurations": [
         "outskirts.path",
         "outskirts.arguments",
-        "outskirts.skipBuild"
+        "outskirts.skipBuild",
+        "outskirts.agent",
+        "outskirts.agentCommand"
       ]
     }
   },
@@ -142,6 +144,19 @@
         "command": "outskirts.toggleGroupBy",
         "title": "Toggle Grouping",
         "category": "outskirts"
+      },
+      {
+        "command": "outskirts.fixWithAgent",
+        "title": "Fix with Agent",
+        "category": "outskirts",
+        "icon": "$(sparkle)",
+        "enablement": "outskirts.hasResults"
+      },
+      {
+        "command": "outskirts.pickAgent",
+        "title": "Select Agent",
+        "category": "outskirts",
+        "icon": "$(sparkle)"
       }
     ],
     "configuration": {
@@ -179,6 +194,48 @@
           "default": false,
           "scope": "resource",
           "description": "Reuse the existing index instead of building the project (passes `--skip-build`)."
+        },
+        "outskirts.agent": {
+          "type": "string",
+          "enum": [
+            "",
+            "claude",
+            "copilot",
+            "codex",
+            "gemini",
+            "cursor",
+            "custom"
+          ],
+          "enumItemLabels": [
+            "Ask",
+            "Claude Code",
+            "GitHub Copilot CLI",
+            "Codex CLI",
+            "Gemini CLI",
+            "Cursor Agent",
+            "Custom command"
+          ],
+          "enumDescriptions": [
+            "Ask which agent to start.",
+            "`claude`",
+            "`copilot -i`",
+            "`codex`",
+            "`gemini -i`",
+            "`cursor-agent`",
+            "The command of `outskirts.agentCommand`."
+          ],
+          "default": "",
+          "scope": "machine",
+          "markdownDescription": "Coding agent that **Fix with Agent** starts in a terminal with the results. Empty: ask among the agents installed on the PATH."
+        },
+        "outskirts.agentCommand": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "scope": "machine",
+          "markdownDescription": "Command of the custom agent (`outskirts.agent` set to `custom`): the executable first, then its arguments, with `${prompt}` as one whole argument, e.g. `[\"my-agent\", \"--interactive\", \"${prompt}\"]`. No shell is used."
         }
       }
     },
@@ -233,6 +290,11 @@
           "command": "outskirts.scanView",
           "when": "view == outskirts.results && !outskirts.scanning && outskirts.state != unavailable",
           "group": "navigation@1"
+        },
+        {
+          "command": "outskirts.fixWithAgent",
+          "when": "view == outskirts.results && outskirts.hasResults && !outskirts.scanning",
+          "group": "navigation@2"
         },
         {
           "command": "outskirts.cancel",
@@ -338,18 +400,46 @@
         {
           "command": "outskirts.scanOptions",
           "when": "outskirts.state != unavailable"
+        },
+        {
+          "command": "outskirts.fixWithAgent",
+          "when": "outskirts.hasResults"
+        },
+        {
+          "command": "outskirts.pickAgent",
+          "when": "outskirts.state != unavailable"
         }
       ],
       "view/item/context": [
         {
           "command": "outskirts.scanFolder",
-          "when": "view == outskirts.results && viewItem == folder && !outskirts.scanning",
+          "when": "view == outskirts.results && viewItem =~ /^folder/ && !outskirts.scanning",
           "group": "inline@1"
         },
         {
           "command": "outskirts.clearFolder",
-          "when": "view == outskirts.results && viewItem == folder",
+          "when": "view == outskirts.results && viewItem =~ /^folder/",
           "group": "inline@2"
+        },
+        {
+          "command": "outskirts.fixWithAgent",
+          "when": "view == outskirts.results && viewItem == folder.results",
+          "group": "inline@3"
+        },
+        {
+          "command": "outskirts.fixWithAgent",
+          "when": "view == outskirts.results && viewItem == fileGroup",
+          "group": "inline@1"
+        },
+        {
+          "command": "outskirts.fixWithAgent",
+          "when": "view == outskirts.results && viewItem == result",
+          "group": "inline@1"
+        },
+        {
+          "command": "outskirts.fixWithAgent",
+          "when": "view == outskirts.results && viewItem =~ /^(folder\\.results|fileGroup|result)$/",
+          "group": "agent@1"
         }
       ]
     }
