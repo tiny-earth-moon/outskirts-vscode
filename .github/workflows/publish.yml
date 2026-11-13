@@ -28,6 +28,8 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test:unit
+      - name: Check that CHANGELOG.md has a dated section for the version
+        run: node out/scripts/checkChangelog.js
       - run: xvfb-run -a npm run test:integration
       - run: npx vsce package --out outskirts.vsix
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
