@@ -18,7 +18,11 @@ export interface OutskirtsApi {
   readonly tree: ResultsTreeProvider;
   readonly ready: Promise<void>;
   readonly options: OptionsView;
-  readonly agents: AgentRegistry;
+  readonly testing?: TestingApi;
+}
+
+export interface TestingApi {
+  readonly setAgentSearchPath: (directories: readonly string[] | undefined) => void;
 }
 
 type FolderTarget = FolderNode | vscode.Uri;
@@ -126,7 +130,11 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
       vscode.commands.executeCommand("workbench.action.openSettings", "@ext:tiny-earth-moon.outskirts"),
     ),
   );
-  return { tree, ready, options, agents };
+  const testing: TestingApi | undefined =
+    context.extensionMode === vscode.ExtensionMode.Test
+      ? { setAgentSearchPath: (directories) => { agents.setSearchPath(directories); } }
+      : undefined;
+  return { tree, ready, options, testing };
 }
 
 export function deactivate(): void {}

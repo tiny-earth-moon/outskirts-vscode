@@ -32,14 +32,17 @@ async function waitForFile(file: string, timeout: number): Promise<Launch> {
 export function describeFixWithAgent(): void {
   describe("outskirts.fixWithAgent", () => {
     it("starts the selected agent in the project directory with the prompt as one argument", async () => {
-      const { agents, options } = await activateWithFake();
+      const { testing, options } = await activateWithFake();
+      if (testing === undefined) {
+        throw new Error("The testing API is only available in test mode.");
+      }
       const directory = mkdtempSync(path.join(os.tmpdir(), "outskirts-agent-"));
       const executable = path.join(directory, "claude");
       writeFileSync(executable, fakeAgent);
       chmodSync(executable, 0o755);
       const config = vscode.workspace.getConfiguration("outskirts");
       try {
-        agents.setSearchPathForTesting([directory]);
+        testing.setAgentSearchPath([directory]);
         await config.update("agent", "claude", vscode.ConfigurationTarget.Global);
         const agentRow = options.tree.getChildren().find((row) => row.id === "agent");
         assert.equal(agentRow?.description, "Claude Code");
@@ -54,7 +57,7 @@ export function describeFixWithAgent(): void {
         assert.ok(vscode.window.terminals.some((terminal) => terminal.name === "outskirts: Claude Code"));
       } finally {
         await config.update("agent", undefined, vscode.ConfigurationTarget.Global);
-        agents.setSearchPathForTesting(undefined);
+        testing.setAgentSearchPath(undefined);
         vscode.window.terminals.filter((terminal) => terminal.name.startsWith("outskirts: ")).forEach((terminal) => {
           terminal.dispose();
         });

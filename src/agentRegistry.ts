@@ -35,7 +35,7 @@ export class AgentRegistry {
     return agentStatus(selection, (agent) => this.resolve(agent));
   }
 
-  setSearchPathForTesting(directories: readonly string[] | undefined): void {
+  setSearchPath(directories: readonly string[] | undefined): void {
     this.searchPath = directories;
     this.refresh();
   }
