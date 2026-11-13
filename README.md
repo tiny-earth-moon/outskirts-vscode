@@ -10,7 +10,7 @@ outskirts installed, e.g. `brew install tiny-earth-moon/tap/outskirts`, and a pr
 
 ## Commands
 
-- **outskirts: Scan** scans the folder of the active editor (or the folder you pick in a multi-root workspace) and replaces the previous results. The scan can be cancelled from its notification.
+- **outskirts: Scan** scans the folder of the active editor (or the folder you pick in a multi-root workspace) and replaces the previous results. The scan can be cancelled from its notification; when it ends, a message gives the number of results.
 - **outskirts: Clear Results** removes the results.
 
 The output of outskirts is written to the "outskirts" output channel.
