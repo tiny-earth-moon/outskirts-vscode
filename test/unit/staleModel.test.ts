@@ -1,7 +1,7 @@
 import * as assert from "node:assert/strict";
 import { Finding } from "../../src/findings";
 import { ResultsStore } from "../../src/resultsStore";
-import { filesWithResults, freshFindings, isStaleFinding, projectsWithFile } from "../../src/staleModel";
+import { freshFindings, isStaleFinding, projectsByFile, watchRoots } from "../../src/staleModel";
 
 function finding(file: string, line: number): Finding {
   return { file, line, column: 0, kind: "function", name: "f()", code: "unused", message: "Unused" };
@@ -56,12 +56,34 @@ describe("stale results", () => {
     assert.equal(isStaleFinding(results.all(), b), false);
   });
 
-  it("lists the files to watch and the projects of a changed or deleted file", () => {
+  it("watches each project once, whatever its number of files, and keeps watching after a change", () => {
     const results = store();
-    assert.deepEqual(filesWithResults(results.all()), ["/app/A.swift", "/app/B.swift"]);
-    assert.deepEqual(projectsWithFile(results.all(), "/app/A.swift"), ["app", "other"]);
+    const roots = { app: "/app", other: "/app" } as Record<string, string | undefined>;
+    assert.deepEqual(watchRoots(results.all(), (key) => roots[key]), [{ base: "/app", pattern: "**/*" }]);
     results.markStale("app", "/app/B.swift");
-    assert.deepEqual(filesWithResults(results.all()), ["/app/A.swift"]);
-    assert.deepEqual(projectsWithFile(results.all(), "/app/Gone.swift"), []);
+    assert.deepEqual(watchRoots(results.all(), (key) => roots[key]), [{ base: "/app", pattern: "**/*" }]);
+  });
+
+  it("watches the folder of a result outside its project, with its name in the base and never in the pattern", () => {
+    const results = new ResultsStore();
+    results.set("app", [finding("/app/Sources/A.swift", 1), finding("/libs/Foo[1]{a,b}*/Bar[2].swift", 1)], "warning", 1);
+    results.set("nested", [finding("/app/Sub/C.swift", 1)], "warning", 1);
+    const roots = { app: "/app", nested: "/app/Sub" } as Record<string, string | undefined>;
+    assert.deepEqual(watchRoots(results.all(), (key) => roots[key]), [
+      { base: "/app", pattern: "**/*" },
+      { base: "/libs/Foo[1]{a,b}*", pattern: "*" },
+    ]);
+    assert.deepEqual(watchRoots(results.all(), () => undefined), [
+      { base: "/app/Sources", pattern: "*" },
+      { base: "/app/Sub", pattern: "*" },
+      { base: "/libs/Foo[1]{a,b}*", pattern: "*" },
+    ]);
+  });
+
+  it("indexes the projects of a changed or deleted file", () => {
+    const index = projectsByFile(store().all());
+    assert.deepEqual(index.get("/app/A.swift"), ["app", "other"]);
+    assert.deepEqual(index.get("/app/B.swift"), ["app"]);
+    assert.equal(index.get("/app/Gone.swift"), undefined);
   });
 });

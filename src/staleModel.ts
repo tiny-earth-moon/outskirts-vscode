@@ -1,3 +1,4 @@
+import * as path from "node:path";
 import { Finding } from "./findings";
 import { FolderResults } from "./resultsStore";
 
@@ -17,18 +18,47 @@ export function freshFindings(entry: FolderResults | undefined, findings: readon
   return findings.filter((finding) => entry?.stale.has(finding.file) !== true);
 }
 
-export function filesWithResults(results: ReadonlyMap<string, FolderResults>): string[] {
-  const files = new Set<string>();
-  for (const entry of results.values()) {
+export interface WatchRoot {
+  readonly base: string;
+  readonly pattern: "**/*" | "*";
+}
+
+export function watchRoots(results: ReadonlyMap<string, FolderResults>, rootOf: (project: string) => string | undefined): WatchRoot[] {
+  const recursive = new Set<string>();
+  const flat = new Set<string>();
+  for (const [project, entry] of results) {
+    const root = rootOf(project);
+    if (root !== undefined && entry.findings.length > 0) {
+      recursive.add(root);
+    }
     for (const finding of entry.findings) {
-      if (!entry.stale.has(finding.file)) {
-        files.add(finding.file);
+      if (root === undefined || !isInside(finding.file, root)) {
+        flat.add(path.dirname(finding.file));
       }
     }
   }
-  return [...files].sort();
+  const roots = [...recursive].filter((root) => ![...recursive].some((other) => other !== root && isInside(root, other)));
+  const folders = [...flat].filter((folder) => !roots.some((root) => folder === root || isInside(folder, root)));
+  return [
+    ...roots.sort().map((base) => ({ base, pattern: "**/*" as const })),
+    ...folders.sort().map((base) => ({ base, pattern: "*" as const })),
+  ];
 }
 
-export function projectsWithFile(results: ReadonlyMap<string, FolderResults>, file: string): string[] {
-  return [...results].filter(([, entry]) => entry.findings.some((finding) => finding.file === file)).map(([key]) => key);
+export function projectsByFile(results: ReadonlyMap<string, FolderResults>): Map<string, string[]> {
+  const index = new Map<string, string[]>();
+  for (const [project, entry] of results) {
+    for (const finding of entry.findings) {
+      const projects = index.get(finding.file) ?? [];
+      if (!projects.includes(project)) {
+        projects.push(project);
+        index.set(finding.file, projects);
+      }
+    }
+  }
+  return index;
+}
+
+function isInside(file: string, folder: string): boolean {
+  return file.startsWith(folder.endsWith(path.sep) ? folder : folder + path.sep);
 }

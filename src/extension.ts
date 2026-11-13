@@ -81,7 +81,7 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
     statusBar,
     bindDiagnostics(collection, store),
     followSeverity(store, () => projects.projects),
-    watchStaleFiles(store),
+    watchStaleFiles(store, (key) => projects.find(key)?.uri.fsPath),
     store.onDidChange(updateState),
     projects.onDidChange(() => {
       store.retain(projects.infos.map((folder) => folder.key));

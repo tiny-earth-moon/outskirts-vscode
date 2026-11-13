@@ -1,15 +1,16 @@
 import * as vscode from "vscode";
 import { ResultsStore } from "./resultsStore";
-import { filesWithResults, projectsWithFile } from "./staleModel";
+import { projectsByFile, watchRoots } from "./staleModel";
 
-export function watchStaleFiles(store: ResultsStore): vscode.Disposable {
+export function watchStaleFiles(store: ResultsStore, rootOf: (project: string) => string | undefined): vscode.Disposable {
   let watched = "";
   let watchers: vscode.Disposable[] = [];
+  let index = new Map<string, string[]>();
   const mark = (uri: vscode.Uri): void => {
     if (uri.scheme !== "file") {
       return;
     }
-    for (const project of projectsWithFile(store.all(), uri.fsPath)) {
+    for (const project of index.get(uri.fsPath) ?? []) {
       store.markStale(project, uri.fsPath);
     }
   };
@@ -20,17 +21,16 @@ export function watchStaleFiles(store: ResultsStore): vscode.Disposable {
     watchers = [];
   };
   const rewatch = (): void => {
-    const files = filesWithResults(store.all());
-    const key = files.join("\n");
+    index = projectsByFile(store.all());
+    const roots = watchRoots(store.all(), rootOf);
+    const key = roots.map((root) => `${root.pattern} ${root.base}`).join("\n");
     if (key === watched) {
       return;
     }
     watched = key;
     disposeWatchers();
-    watchers = files.flatMap((file) => {
-      const uri = vscode.Uri.file(file);
-      const pattern = new vscode.RelativePattern(vscode.Uri.joinPath(uri, ".."), uri.path.split("/").pop() ?? "");
-      const watcher = vscode.workspace.createFileSystemWatcher(pattern, true, false, false);
+    watchers = roots.flatMap((root) => {
+      const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(vscode.Uri.file(root.base), root.pattern), true, false, false);
       return [watcher, watcher.onDidChange(mark), watcher.onDidDelete(mark)];
     });
   };
