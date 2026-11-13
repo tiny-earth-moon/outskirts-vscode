@@ -1,18 +1,20 @@
 import * as vscode from "vscode";
 import { bindDiagnostics } from "./diagnostics";
 import { FolderNode, viewState } from "./folderModel";
+import { isFolderNode } from "./folderTree";
+import { OptionsView, createOptionsView } from "./optionsView";
 import { activeFolder, pickScanTargets } from "./pickFolder";
 import { ResultsStore } from "./resultsStore";
 import { ResultsTreeProvider } from "./resultsTree";
 import { ScannableFolders } from "./scannableFolders";
 import { Scanner } from "./scanCommand";
-import { editScanOptions } from "./scanOptions";
 import { createStatusBar } from "./statusBar";
 import { GroupBy } from "./treeModel";
 
 export interface OutskirtsApi {
   readonly tree: ResultsTreeProvider;
   readonly ready: Promise<void>;
+  readonly options: OptionsView;
 }
 
 type FolderTarget = FolderNode | vscode.Uri;
@@ -31,7 +33,10 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
   const groupBy = (mode: GroupBy): void => {
     tree.groupBy = mode;
     setContext("groupBy", mode);
+    options.refresh();
   };
+  const options = createOptionsView(scannable, scanner, { get: () => tree.groupBy, set: groupBy });
+  const resultsView = vscode.window.createTreeView("outskirts.results", { treeDataProvider: tree, showCollapseAll: true });
   const updateState = (): void => {
     setContext("state", viewState(scannable.infos, store.all()));
     tree.refresh();
@@ -73,7 +78,14 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
       setContext("scanning", running);
       tree.refresh();
     }),
-    vscode.window.createTreeView("outskirts.results", { treeDataProvider: tree, showCollapseAll: true }),
+    options,
+    resultsView,
+    resultsView.onDidChangeSelection((event) => {
+      const node = event.selection.at(0);
+      if (node !== undefined && isFolderNode(node)) {
+        options.select(node.key);
+      }
+    }),
     vscode.commands.registerCommand("outskirts.scan", () => scanPicked(true)),
     vscode.commands.registerCommand("outskirts.scanView", () => scanPicked(false)),
     vscode.commands.registerCommand("outskirts.scanFolder", async (node?: FolderTarget) => {
@@ -100,12 +112,11 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
     vscode.commands.registerCommand("outskirts.groupByKind", () => {
       groupBy("kind");
     }),
-    vscode.commands.registerCommand("outskirts.scanOptions", () => editScanOptions(scannable.folders)),
     vscode.commands.registerCommand("outskirts.openSettings", () =>
       vscode.commands.executeCommand("workbench.action.openSettings", "@ext:tiny-earth-moon.outskirts"),
     ),
   );
-  return { tree, ready };
+  return { tree, ready, options };
 }
 
 export function deactivate(): void {}

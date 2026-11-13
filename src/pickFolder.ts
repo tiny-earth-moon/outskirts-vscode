@@ -32,7 +32,7 @@ export async function pickOneFolder(folders: readonly vscode.WorkspaceFolder[]):
     return single(folders)?.[0];
   }
   const items = folders.map((folder) => ({ label: folder.name, description: folder.uri.fsPath, folders: [folder] }));
-  const picked = await choose(items, "Folder whose scan options to edit", undefined);
+  const picked = await choose(items, "Folder whose scan options to show", undefined);
   return picked?.folders[0];
 }
 

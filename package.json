@@ -93,7 +93,7 @@
       },
       {
         "command": "outskirts.scanOptions",
-        "title": "Scan Options…",
+        "title": "Show Scan Options",
         "category": "outskirts",
         "icon": "$(settings)"
       },
@@ -102,6 +102,33 @@
         "title": "Open Settings",
         "category": "outskirts",
         "icon": "$(gear)"
+      },
+      {
+        "command": "outskirts.scanCurrentFolder",
+        "title": "Scan",
+        "category": "outskirts",
+        "icon": "$(play)"
+      },
+      {
+        "command": "outskirts.selectFolder",
+        "title": "Select Folder",
+        "category": "outskirts",
+        "icon": "$(root-folder)"
+      },
+      {
+        "command": "outskirts.editSeverity",
+        "title": "Change Severity",
+        "category": "outskirts"
+      },
+      {
+        "command": "outskirts.editArguments",
+        "title": "Edit Extra Arguments",
+        "category": "outskirts"
+      },
+      {
+        "command": "outskirts.toggleGroupBy",
+        "title": "Toggle Grouping",
+        "category": "outskirts"
       }
     ],
     "configuration": {
@@ -156,6 +183,12 @@
         {
           "id": "outskirts.results",
           "name": "Results"
+        },
+        {
+          "id": "outskirts.options",
+          "name": "Scan Options",
+          "visibility": "collapsed",
+          "when": "outskirts.state != unavailable"
         }
       ]
     },
@@ -217,6 +250,26 @@
           "command": "outskirts.openSettings",
           "when": "view == outskirts.results",
           "group": "9_settings"
+        },
+        {
+          "command": "outskirts.scanCurrentFolder",
+          "when": "view == outskirts.options && !outskirts.scanning",
+          "group": "navigation@1"
+        },
+        {
+          "command": "outskirts.cancel",
+          "when": "view == outskirts.options && outskirts.scanning",
+          "group": "navigation@1"
+        },
+        {
+          "command": "outskirts.selectFolder",
+          "when": "view == outskirts.options && outskirts.severalFolders",
+          "group": "navigation@2"
+        },
+        {
+          "command": "outskirts.openSettings",
+          "when": "view == outskirts.options",
+          "group": "navigation@3"
         }
       ],
       "commandPalette": [
@@ -243,6 +296,30 @@
         {
           "command": "outskirts.clearFolder",
           "when": "false"
+        },
+        {
+          "command": "outskirts.scanCurrentFolder",
+          "when": "false"
+        },
+        {
+          "command": "outskirts.selectFolder",
+          "when": "false"
+        },
+        {
+          "command": "outskirts.editSeverity",
+          "when": "false"
+        },
+        {
+          "command": "outskirts.editArguments",
+          "when": "false"
+        },
+        {
+          "command": "outskirts.toggleGroupBy",
+          "when": "false"
+        },
+        {
+          "command": "outskirts.scanOptions",
+          "when": "outskirts.state != unavailable"
         }
       ],
       "view/item/context": [

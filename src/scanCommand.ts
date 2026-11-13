@@ -8,8 +8,8 @@ import { buildScanArguments } from "./scanArguments";
 import { resolveExecutable } from "./executable";
 import { folderKey } from "./scannableFolders";
 import { scanSummary, sequenceSummary } from "./summary";
+import { installHint } from "./optionsModel";
 
-const installHint = "Install it with `brew install tiny-earth-moon/tap/outskirts` or set `outskirts.path`.";
 
 export class Scanner {
   private controller: AbortController | undefined;
