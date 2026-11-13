@@ -60,12 +60,18 @@ export function leafLabel(finding: Finding): string {
   return finding.name;
 }
 
-export function leafDescription(finding: Finding, groupBy: GroupBy): string {
+export function leafDescription(finding: Finding, groupBy: GroupBy, stale = false): string {
   const line = `line ${String(finding.line + 1)}`;
+  const suffix = stale ? " · stale" : "";
   if (groupBy === "file") {
-    return `${hintLabel(finding.code).toLowerCase()} ${finding.kind} · ${line}`;
+    return `${hintLabel(finding.code).toLowerCase()} ${finding.kind} · ${line}${suffix}`;
   }
-  return `${finding.kind} · ${path.basename(finding.file)} · ${line}`;
+  return `${finding.kind} · ${path.basename(finding.file)} · ${line}${suffix}`;
+}
+
+export function groupDescription(group: ResultGroup, stale: boolean): string {
+  const parts = [group.description, String(group.findings.length), stale ? "changed since scan" : undefined];
+  return parts.filter((part) => part !== undefined).join(" · ");
 }
 
 function fileGroup(file: string, root: string | undefined): ResultGroup {

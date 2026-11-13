@@ -11,6 +11,7 @@ export interface FolderNode extends FolderInfo {
   type: "folder";
   description: string;
   expanded: boolean;
+  stale: boolean;
 }
 
 export type ViewState = "unavailable" | ResultsState;
@@ -37,7 +38,8 @@ export function folderDescription(entry: FolderResults | undefined, scanning: bo
   if (entry.findings.length === 0) {
     return "no unused code";
   }
-  return `${statusText(entry.findings.length)} · ${relativeTime(now - entry.scannedAt)}`;
+  const stale = entry.stale.size === 0 ? [] : [`${String(entry.stale.size)} to rescan`];
+  return [statusText(entry.findings.length), ...stale, relativeTime(now - entry.scannedAt)].join(" · ");
 }
 
 export function folderNode(
@@ -47,7 +49,7 @@ export function folderNode(
   now: number,
 ): FolderNode {
   const expanded = entry !== undefined && entry.findings.length > 0;
-  return { ...folder, type: "folder", description: folderDescription(entry, scanning, now), expanded };
+  return { ...folder, type: "folder", description: folderDescription(entry, scanning, now), expanded, stale: (entry?.stale.size ?? 0) > 0 };
 }
 
 export function viewState(folders: readonly FolderInfo[], results: ReadonlyMap<string, FolderResults>): ViewState {

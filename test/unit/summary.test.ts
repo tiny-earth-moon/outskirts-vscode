@@ -24,4 +24,8 @@ describe("statusTooltip", () => {
       "App: 12 results\nLibrary: not scanned",
     );
   });
+
+  it("mentions the files to rescan", () => {
+    assert.equal(statusTooltip([{ name: "App", count: 12, stale: 2 }]), "App: 12 results · 2 to rescan");
+  });
 });

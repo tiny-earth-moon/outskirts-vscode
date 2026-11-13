@@ -1,6 +1,6 @@
 import * as assert from "node:assert/strict";
 import { Finding } from "../../src/findings";
-import { groupFindings, hintLabel, leafDescription, leafLabel } from "../../src/treeModel";
+import { groupDescription, groupFindings, hintLabel, leafDescription, leafLabel } from "../../src/treeModel";
 
 function finding(file: string, line: number, code: string | undefined, name = "x"): Finding {
   return { file, line, column: 0, kind: "function", name, code, message: `${String(code)} ${name}` };
@@ -43,6 +43,15 @@ describe("tree labels", () => {
     assert.equal(leafLabel(item), "helper()");
     assert.equal(leafDescription(item, "file"), "unused function · line 5");
     assert.equal(leafDescription(item, "kind"), "function · A.swift · line 5");
+  });
+
+  it("marks the results of a changed file as stale in both groupings", () => {
+    const item = finding("/w/A.swift", 4, "unused", "helper()");
+    assert.equal(leafDescription(item, "file", true), "unused function · line 5 · stale");
+    assert.equal(leafDescription(item, "kind", true), "function · A.swift · line 5 · stale");
+    const [, group] = groupFindings(findings, "file", "/w");
+    assert.equal(groupDescription(group, false), "Sources · 3");
+    assert.equal(groupDescription(group, true), "Sources · 3 · changed since scan");
   });
 
   it("derives a label for an unknown hint", () => {

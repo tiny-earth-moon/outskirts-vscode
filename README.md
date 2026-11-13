@@ -26,13 +26,15 @@ The output of outskirts is written to the "outskirts" output channel.
 
 The outskirts icon in the activity bar opens the results, grouped by file or by kind of finding with their counts; clicking a result opens its location. The title bar of the view has buttons to scan, cancel, show the options, switch the grouping, clear the results, refresh the projects and open the settings. After a scan, the status bar shows the number of results; clicking it shows the view.
 
+When a file with results changes after the scan, in the editor or on disk (for example by an agent), its results are stale: their diagnostics leave the Problems panel since they may point at the wrong lines, the file is marked "changed since scan" and its results "stale" in the tree, and the project and the status bar tell how many files are to rescan. Stale results are left out of Fix with Agent. Nothing is rescanned automatically, since a scan builds the project: scan again to refresh them.
+
 Below the results, the collapsible **Scan Options** section shows the options of a project with their current values:
 
 - **Reuse existing index**: a checkbox that scans without building, on the index of the last build (`--skip-build`).
 - **Severity**: click to pick the severity of the diagnostics.
 - **Extra arguments**: click to edit them, quoted like in a shell; no shell is used.
 - **Group results**: click to switch between grouping by file and by kind.
-- **outskirts**: the executable and its version, or "not found"; click to open the settings.
+- **Executable**: the executable and its version, or "not found"; click to open the settings.
 - **Agent**: the coding agent that Fix with Agent starts, "not set", or "(not installed)"; click to choose it.
 
 Its title bar has buttons to scan the project with these options and to open the settings. With several projects, the view names the project it shows, follows the project last scanned or selected in the results, and has a button to select another project.

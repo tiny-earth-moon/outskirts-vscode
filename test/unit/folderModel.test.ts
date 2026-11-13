@@ -9,7 +9,7 @@ const app = { key: "file:///app", name: "App", root: "/app" };
 const library = { key: "file:///library", name: "Library", root: "/library" };
 
 function results(count: number, ago: number): FolderResults {
-  return { findings: Array<Finding>(count).fill(finding), severity: "warning", scannedAt: now - ago };
+  return { findings: Array<Finding>(count).fill(finding), severity: "warning", scannedAt: now - ago, stale: new Set<string>() };
 }
 
 describe("relativeTime", () => {
@@ -27,6 +27,13 @@ describe("folderDescription", () => {
     assert.equal(folderDescription(undefined, false, now), "not scanned");
     assert.equal(folderDescription(results(0, 0), false, now), "no unused code");
     assert.equal(folderDescription(results(12, 0), true, now), "scanning…");
+  });
+
+  it("counts the files to rescan without changing the count", () => {
+    const entry = { ...results(12, 5 * 60_000), stale: new Set(["/a/A.swift"]) };
+    assert.equal(folderDescription(entry, false, now), "12 results · 1 to rescan · 5 min ago");
+    assert.equal(folderNode(app, entry, false, now).stale, true);
+    assert.equal(folderNode(app, results(1, 0), false, now).stale, false);
   });
 
   it("expands only the folders with results", () => {

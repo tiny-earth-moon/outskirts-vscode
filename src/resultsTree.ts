@@ -2,7 +2,8 @@ import * as vscode from "vscode";
 import { FolderInfo } from "./folderModel";
 import { isFolderNode, isResultGroup, treeChildren, TreeNode } from "./folderTree";
 import { ResultsStore } from "./resultsStore";
-import { GroupBy, leafDescription, leafLabel } from "./treeModel";
+import { isStaleFinding, staleHint } from "./staleModel";
+import { GroupBy, groupDescription, leafDescription, leafLabel } from "./treeModel";
 
 export type ResultNode = TreeNode;
 
@@ -48,7 +49,7 @@ export class ResultsTreeProvider implements vscode.TreeDataProvider<ResultNode> 
       const item = new vscode.TreeItem(node.name, state);
       item.id = `folder:${node.key}`;
       item.description = node.description;
-      item.tooltip = node.root;
+      item.tooltip = node.stale ? `${node.root}\n${staleHint}` : node.root;
       item.contextValue = (this.store.get(node.key)?.findings.length ?? 0) > 0 ? "folder.results" : "folder";
       item.iconPath = vscode.ThemeIcon.Folder;
       item.resourceUri = vscode.Uri.parse(node.key);
@@ -57,7 +58,8 @@ export class ResultsTreeProvider implements vscode.TreeDataProvider<ResultNode> 
     if (isResultGroup(node)) {
       const item = new vscode.TreeItem(node.label, vscode.TreeItemCollapsibleState.Expanded);
       item.id = `${node.folder ?? ""}:${this.mode}:${node.key}`;
-      item.description = [node.description, String(node.findings.length)].filter((part) => part !== undefined).join(" · ");
+      const stale = this.mode === "file" && node.folder !== undefined && this.store.get(node.folder)?.stale.has(node.key) === true;
+      item.description = groupDescription(node, stale);
       item.iconPath = this.mode === "file" ? vscode.ThemeIcon.File : new vscode.ThemeIcon("symbol-misc");
       if (this.mode === "file") {
         item.resourceUri = vscode.Uri.file(node.key);
@@ -66,7 +68,7 @@ export class ResultsTreeProvider implements vscode.TreeDataProvider<ResultNode> 
       return item;
     }
     const item = new vscode.TreeItem(leafLabel(node), vscode.TreeItemCollapsibleState.None);
-    item.description = leafDescription(node, this.mode);
+    item.description = leafDescription(node, this.mode, isStaleFinding(this.store.all(), node));
     item.tooltip = node.message;
     item.iconPath = new vscode.ThemeIcon("warning");
     item.contextValue = "result";

@@ -6,6 +6,7 @@ export interface FolderResults {
   readonly findings: readonly Finding[];
   readonly severity: string;
   readonly scannedAt: number;
+  readonly stale: ReadonlySet<string>;
 }
 
 export function resultsState(entry: FolderResults | undefined): ResultsState {
@@ -36,8 +37,18 @@ export class ResultsStore {
   }
 
   set(folder: string, findings: readonly Finding[], severity: string, scannedAt: number): void {
-    this.entries.set(folder, { findings, severity, scannedAt });
+    this.entries.set(folder, { findings, severity, scannedAt, stale: new Set() });
     this.notify();
+  }
+
+  markStale(folder: string, file: string): boolean {
+    const entry = this.entries.get(folder);
+    if (entry === undefined || entry.stale.has(file) || !entry.findings.some((finding) => finding.file === file)) {
+      return false;
+    }
+    this.entries.set(folder, { ...entry, stale: new Set([...entry.stale, file]) });
+    this.notify();
+    return true;
   }
 
   clear(folder: string): void {

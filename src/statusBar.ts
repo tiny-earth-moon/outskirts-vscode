@@ -22,7 +22,7 @@ export function createStatusBar(
     } else {
       item.text = `$(circle-large-outline) outskirts: ${String(store.total)}`;
       item.tooltip = statusTooltip(
-        folders().map((folder) => ({ name: folder.name, count: store.get(folder.key)?.findings.length })),
+        folders().map((folder) => ({ name: folder.name, count: store.get(folder.key)?.findings.length, stale: store.get(folder.key)?.stale.size })),
       );
       item.show();
     }

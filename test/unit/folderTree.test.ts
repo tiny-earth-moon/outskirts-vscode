@@ -10,7 +10,7 @@ const library = { key: "file:///library", name: "Library", root: "/library" };
 
 function results(file: string): FolderResults {
   const finding: Finding = { file, line: 0, column: 0, kind: "function", name: "a()", code: "unused", message: "Unused" };
-  return { findings: [finding], severity: "warning", scannedAt: 0 };
+  return { findings: [finding], severity: "warning", scannedAt: 0, stale: new Set<string>() };
 }
 
 function context(folders: TreeContext["folders"], entries: [string, FolderResults][]): TreeContext {

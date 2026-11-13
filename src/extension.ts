@@ -11,6 +11,7 @@ import { ProjectList } from "./projectList";
 import { ResultsStore } from "./resultsStore";
 import { ResultsTreeProvider } from "./resultsTree";
 import { Scanner } from "./scanCommand";
+import { watchStaleFiles } from "./staleWatcher";
 import { createStatusBar } from "./statusBar";
 import { GroupBy } from "./treeModel";
 
@@ -79,6 +80,7 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
     projects,
     statusBar,
     bindDiagnostics(collection, store),
+    watchStaleFiles(store),
     store.onDidChange(updateState),
     projects.onDidChange(() => {
       store.retain(projects.infos.map((folder) => folder.key));
