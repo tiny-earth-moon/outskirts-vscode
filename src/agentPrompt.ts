@@ -4,6 +4,9 @@ import { compareFindings, hintLabel } from "./treeModel";
 
 export const maxPromptResults = 200;
 export const maxPromptBytes = 100_000;
+export const maxWindowsCommandLine = 32_766;
+
+export type CommandLineLength = (prompt: string) => number;
 
 export interface PromptInput {
   projectName: string;
@@ -28,8 +31,15 @@ const verifyInstructions = [
   "- End with a summary of what you removed and what you kept, and why.",
 ];
 
+export const replacementCharacter = "\uFFFD";
+
+const subdivisionFlag = "\u{1F3F4}[\u{E0030}-\u{E0039}\u{E0061}-\u{E007A}]{1,6}\u{E007F}";
+const joinerBetweenLetters = "(?<=[\\p{L}\\p{M}\\p{Extended_Pictographic}\\p{Emoji_Modifier}\\u{FE0F}])[\\u{200C}\\u{200D}](?=[\\p{L}\\p{Extended_Pictographic}])";
+const invisible = "([\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\u{115F}\\u{1160}\\u{3164}\\u{FFA0}]+)";
+const sanitizePattern = new RegExp(`${subdivisionFlag}|${joinerBetweenLetters}|${invisible}`, "gu");
+
 export function sanitize(text: string): string {
-  return text.replace(/[\p{Cc}‪-‮⁦-⁩]/gu, "");
+  return text.replace(sanitizePattern, (match: string, hidden: string | undefined) => (hidden === undefined ? match : replacementCharacter));
 }
 
 export function buildPrompt(input: PromptInput, limit = maxPromptResults): string {
@@ -59,15 +69,31 @@ export function buildPrompt(input: PromptInput, limit = maxPromptResults): strin
   return lines.join("\n");
 }
 
-export function fitPrompt(input: PromptInput, maxBytes = maxPromptBytes, limit = maxPromptResults): string {
+export function windowsArgumentLength(arg: string): number {
+  if (arg !== "" && !/[ \t\n\v"]/.test(arg)) {
+    return arg.length;
+  }
+  const escapes = arg.length - arg.replace(/["\\]/g, "").length;
+  return arg.length + escapes + 2;
+}
+
+export function windowsCommandLineLength(executable: string, args: readonly string[]): number {
+  return [executable, ...args].reduce((total, arg) => total + windowsArgumentLength(arg), 0) + args.length;
+}
+
+export function commandLineLength(platform: NodeJS.Platform, executable: string, argsFor: (prompt: string) => readonly string[]): CommandLineLength | undefined {
+  return platform === "win32" ? (prompt) => windowsCommandLineLength(executable, argsFor(prompt)) : undefined;
+}
+
+export function fitPrompt(input: PromptInput, maxBytes = maxPromptBytes, limit = maxPromptResults, lineLength?: CommandLineLength): string {
   let count = Math.min(limit, input.findings.length);
   for (;;) {
     const prompt = buildPrompt(input, count);
-    const size = Buffer.byteLength(prompt, "utf8");
-    if (size <= maxBytes || count === 0) {
+    const overshoot = Math.max(Buffer.byteLength(prompt, "utf8") / maxBytes, lineLength === undefined ? 0 : lineLength(prompt) / maxWindowsCommandLine);
+    if (overshoot <= 1 || count === 0) {
       return prompt;
     }
-    count = Math.max(Math.min(count - 1, Math.floor((count * maxBytes) / size)), 0);
+    count = Math.max(Math.min(count - 1, Math.floor(count / overshoot)), 0);
   }
 }
 
