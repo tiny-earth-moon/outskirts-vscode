@@ -1,6 +1,8 @@
+import { readFileSync, statSync } from "node:fs";
 import * as path from "node:path";
 import * as vscode from "vscode";
 import { detectAgents, findExecutable, pathDirectories } from "./agentDetection";
+import { AgentLaunch, agentLaunch } from "./agentLaunch";
 import { AgentDefinition, customAgentId, knownAgents } from "./agents";
 import { agentSelection, userValue } from "./agentSettings";
 import { probeAgent } from "./agentProbe";
@@ -53,7 +55,27 @@ export class AgentRegistry {
   status(): AgentStatus {
     const config = vscode.workspace.getConfiguration("outskirts");
     const selection = agentSelection(config.inspect<string>("agent"), config.inspect<unknown>("agentCommand"));
-    return agentStatus(selection, (agent) => this.resolve(agent), (executable) => this.availability(executable));
+    return agentStatus(
+      selection,
+      (agent) => this.resolve(agent),
+      (executable) => this.availability(executable),
+      (executable) => this.refusal(executable),
+    );
+  }
+
+  launch(executable: string): AgentLaunch {
+    return agentLaunch(executable, {
+      platform: process.platform,
+      readText: readSmallText,
+      isFile: (file) => isFile(file),
+      isExecutable: (file) => isExecutableFile(file),
+      findNode: () => findExecutable("node", this.directories(), isExecutableFile, executableExtensions()),
+    });
+  }
+
+  refusal(executable: string): string | undefined {
+    const launch = this.launch(executable);
+    return launch.kind === "refused" ? launch.reason : undefined;
   }
 
   setSearchPath(directories: readonly string[] | undefined): void {
@@ -65,7 +87,9 @@ export class AgentRegistry {
     let probe = this.probes.get(executable);
     if (probe === undefined) {
       const probes = this.probes;
-      probe = probeAgent(executable).then((runs) => {
+      const launch = this.launch(executable);
+      const started = launch.kind === "direct" ? probeAgent(launch.executable, undefined, launch.prefix) : Promise.resolve(false);
+      probe = started.then((runs) => {
         if (probes.get(executable) === probe) {
           this.probed.set(executable, runs);
           this.changed.fire();
@@ -90,5 +114,21 @@ export class AgentRegistry {
 
   private directories(): readonly string[] {
     return this.searchPath ?? pathDirectories(process.env.PATH, path.delimiter);
+  }
+}
+
+function readSmallText(file: string): string | undefined {
+  try {
+    return statSync(file).size <= 65_536 ? readFileSync(file, "utf8") : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function isFile(file: string): boolean {
+  try {
+    return statSync(file).isFile();
+  } catch {
+    return false;
   }
 }

@@ -10,6 +10,7 @@ import { pickOneProject } from "./pickFolder";
 import { ProjectList } from "./projectList";
 import { agentVerify } from "./agentVerify";
 import { ResultsStore } from "./resultsStore";
+import { statusError } from "./agentStatus";
 import { freshFindings, staleScopeMessage } from "./staleModel";
 
 export function registerFixWithAgent(store: ResultsStore, projects: ProjectList, registry: AgentRegistry): vscode.Disposable[] {
@@ -49,16 +50,21 @@ export function registerFixWithAgent(store: ResultsStore, projects: ProjectList,
       }
       status = registry.status();
       if (status.kind !== "ready") {
-        void vscode.window.showErrorMessage(status.kind === "invalid" ? status.reason : "The selected agent is not installed.");
+        void vscode.window.showErrorMessage(statusError(status));
         return;
       }
     }
     const root = project.uri.fsPath;
     const agent = status.agent;
-    const executable = status.executable;
-    const lineLength = commandLineLength(process.platform, executable, (text) => launchRequest(agent, executable, text, root).args);
+    const launch = registry.launch(status.executable);
+    if (launch.kind === "refused") {
+      void vscode.window.showErrorMessage(launch.reason);
+      return;
+    }
+    const request = (text: string) => launchRequest(agent, launch.executable, text, root, launch.prefix);
+    const lineLength = commandLineLength(process.platform, launch.executable, (text) => request(text).args);
     const prompt = fitPrompt({ projectName: project.name, root, findings, verify: agentVerify() }, maxPromptBytes, maxPromptResults, lineLength);
-    launchInTerminal(launchRequest(status.agent, status.executable, prompt, root));
+    launchInTerminal(request(prompt));
   };
   return [
     vscode.commands.registerCommand("outskirts.fixWithAgent", fix),
