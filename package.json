@@ -33,7 +33,8 @@
       "description": "A scan builds the project, so it only runs in a trusted workspace.",
       "restrictedConfigurations": [
         "outskirts.path",
-        "outskirts.arguments"
+        "outskirts.arguments",
+        "outskirts.skipBuild"
       ]
     }
   },
@@ -43,12 +44,44 @@
       {
         "command": "outskirts.scan",
         "title": "Scan",
-        "category": "outskirts"
+        "category": "outskirts",
+        "icon": "$(play)"
+      },
+      {
+        "command": "outskirts.cancel",
+        "title": "Cancel Scan",
+        "category": "outskirts",
+        "icon": "$(debug-stop)"
       },
       {
         "command": "outskirts.clear",
         "title": "Clear Results",
-        "category": "outskirts"
+        "category": "outskirts",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "outskirts.groupByFile",
+        "title": "Group by File",
+        "category": "outskirts",
+        "icon": "$(file)"
+      },
+      {
+        "command": "outskirts.groupByKind",
+        "title": "Group by Kind",
+        "category": "outskirts",
+        "icon": "$(list-tree)"
+      },
+      {
+        "command": "outskirts.scanOptions",
+        "title": "Scan Options…",
+        "category": "outskirts",
+        "icon": "$(settings)"
+      },
+      {
+        "command": "outskirts.openSettings",
+        "title": "Open Settings",
+        "category": "outskirts",
+        "icon": "$(gear)"
       }
     ],
     "configuration": {
@@ -80,8 +113,101 @@
           "default": "warning",
           "scope": "resource",
           "description": "Severity of the diagnostics reported by outskirts."
+        },
+        "outskirts.skipBuild": {
+          "type": "boolean",
+          "default": false,
+          "scope": "resource",
+          "description": "Reuse the existing index instead of building the project (passes `--skip-build`)."
         }
       }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "outskirts",
+          "title": "outskirts",
+          "icon": "images/activity.svg"
+        }
+      ]
+    },
+    "views": {
+      "outskirts": [
+        {
+          "id": "outskirts.results",
+          "name": "Results"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "outskirts.results",
+        "contents": "Find the unused Swift code of this workspace with outskirts.\n[Scan](command:outskirts.scan)",
+        "when": "outskirts.state == none && !outskirts.scanning"
+      },
+      {
+        "view": "outskirts.results",
+        "contents": "No unused code found.\n[Scan Again](command:outskirts.scan)",
+        "when": "outskirts.state == empty && !outskirts.scanning"
+      },
+      {
+        "view": "outskirts.results",
+        "contents": "Scanning…\n[Cancel](command:outskirts.cancel)",
+        "when": "outskirts.scanning && outskirts.state != results"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "outskirts.scan",
+          "when": "view == outskirts.results && !outskirts.scanning",
+          "group": "navigation@1"
+        },
+        {
+          "command": "outskirts.cancel",
+          "when": "view == outskirts.results && outskirts.scanning",
+          "group": "navigation@1"
+        },
+        {
+          "command": "outskirts.scanOptions",
+          "when": "view == outskirts.results",
+          "group": "navigation@2"
+        },
+        {
+          "command": "outskirts.groupByKind",
+          "when": "view == outskirts.results && outskirts.groupBy != kind",
+          "group": "navigation@3"
+        },
+        {
+          "command": "outskirts.groupByFile",
+          "when": "view == outskirts.results && outskirts.groupBy == kind",
+          "group": "navigation@3"
+        },
+        {
+          "command": "outskirts.clear",
+          "when": "view == outskirts.results && outskirts.state != none",
+          "group": "navigation@4"
+        },
+        {
+          "command": "outskirts.openSettings",
+          "when": "view == outskirts.results",
+          "group": "9_settings"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "outskirts.cancel",
+          "when": "outskirts.scanning"
+        },
+        {
+          "command": "outskirts.groupByFile",
+          "when": "outskirts.groupBy == kind"
+        },
+        {
+          "command": "outskirts.groupByKind",
+          "when": "outskirts.groupBy != kind"
+        }
+      ]
     }
   },
   "scripts": {

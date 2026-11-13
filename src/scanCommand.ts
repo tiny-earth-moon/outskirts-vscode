@@ -1,8 +1,9 @@
 import * as vscode from "vscode";
-import { severityFromSetting, showFindings } from "./diagnostics";
+import { severityFromSetting } from "./diagnostics";
 import { toFindings } from "./findings";
 import { interpretRun, ScanFailedError } from "./outcome";
 import { pickFolder } from "./pickFolder";
+import { ResultsStore } from "./resultsStore";
 import { CancelledError, ExecutableNotFoundError, runProcess } from "./runProcess";
 import { buildScanArguments } from "./scanArguments";
 import { resolveExecutable } from "./executable";
@@ -10,40 +11,80 @@ import { scanSummary } from "./summary";
 
 const installHint = "Install it with `brew install tiny-earth-moon/tap/outskirts` or set `outskirts.path`.";
 
-export async function scan(collection: vscode.DiagnosticCollection, output: vscode.OutputChannel): Promise<void> {
-  if (!vscode.workspace.isTrusted) {
-    void vscode.window.showErrorMessage("outskirts: a scan builds the project, so it only runs in a trusted workspace.");
-    return;
+export class Scanner {
+  private controller: AbortController | undefined;
+  private readonly runningChanged = new vscode.EventEmitter<boolean>();
+  readonly onDidChangeRunning = this.runningChanged.event;
+  folder: vscode.WorkspaceFolder | undefined;
+
+  constructor(private readonly store: ResultsStore, private readonly output: vscode.OutputChannel) {}
+
+  get running(): boolean {
+    return this.controller !== undefined;
   }
-  const folder = await pickFolder();
-  if (folder === undefined) {
-    return;
+
+  cancel(): void {
+    this.controller?.abort();
   }
-  const config = vscode.workspace.getConfiguration("outskirts", folder.uri);
-  const executable = resolveExecutable(config.inspect<string>("path"));
-  const args = buildScanArguments(config.get<string[]>("arguments", []));
-  const cwd = folder.uri.fsPath;
-  try {
-    const severity = severityFromSetting(config.get<string>("severity", "warning"));
+
+  async scan(): Promise<void> {
+    if (this.running) {
+      void vscode.window.showWarningMessage("outskirts: a scan is already running.");
+      return;
+    }
+    if (!vscode.workspace.isTrusted) {
+      void vscode.window.showErrorMessage("outskirts: a scan builds the project, so it only runs in a trusted workspace.");
+      return;
+    }
+    const controller = new AbortController();
+    this.setController(controller);
+    try {
+      await this.run(controller);
+    } catch (error) {
+      await report(error, this.output);
+    } finally {
+      this.setController(undefined);
+    }
+  }
+
+  dispose(): void {
+    this.cancel();
+    this.runningChanged.dispose();
+  }
+
+  private async run(controller: AbortController): Promise<void> {
+    const folder = await pickFolder();
+    if (folder === undefined) {
+      return;
+    }
+    const config = vscode.workspace.getConfiguration("outskirts", folder.uri);
+    const executable = resolveExecutable(config.inspect<string>("path"));
+    const args = buildScanArguments(config.get<string[]>("arguments", []), config.get<boolean>("skipBuild", false));
+    const cwd = folder.uri.fsPath;
+    const severity = config.get<string>("severity", "warning");
+    severityFromSetting(severity);
     const run = await vscode.window.withProgress(
       { location: vscode.ProgressLocation.Notification, title: "outskirts: scanning", cancellable: true },
       (_progress, token) => {
-        const controller = new AbortController();
         token.onCancellationRequested(() => {
           controller.abort();
         });
-        output.appendLine(`$ ${executable} ${args.join(" ")}  (in ${cwd})`);
+        this.output.appendLine(`$ ${executable} ${args.join(" ")}  (in ${cwd})`);
         return runProcess(executable, args, { cwd, signal: controller.signal, onOutput: (text) => {
-          output.append(text);
+          this.output.append(text);
         } });
       },
     );
-    output.appendLine(`outskirts exited with status ${String(run.exitCode)}.`);
+    this.output.appendLine(`outskirts exited with status ${String(run.exitCode)}.`);
     const findings = toFindings(interpretRun(run), cwd);
-    showFindings(collection, findings, severity);
+    this.folder = folder;
+    this.store.set(findings, severity);
     void announce(findings.length);
-  } catch (error) {
-    await report(error, output);
+  }
+
+  private setController(controller: AbortController | undefined): void {
+    this.controller = controller;
+    this.runningChanged.fire(controller !== undefined);
   }
 }
 
