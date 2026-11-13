@@ -11,6 +11,7 @@
 - **Output channel**: shows the messages of outskirts and the size of the results, no longer the whole JSON of the results.
 - **outskirts.path**: a leading `~` stands for the home folder. The version check runs in the project folder, and an outskirts that does not answer in time shows "no answer to version" instead of "not found".
 - **Executable lookup**: a name in `outskirts.path` is looked up on the PATH before the scan, never in the project folder (Windows searched it first), and only absolute PATH entries count. A relative path is no longer accepted: give an absolute path or a name.
+- **Overlapping workspace folders**: a project reached both as a workspace folder and as a sub-directory of its parent folder is listed and scanned once, as its own workspace folder, instead of twice under the same name.
 
 ## 0.1.0 (2026-11-13)
 

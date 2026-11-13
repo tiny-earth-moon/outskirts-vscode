@@ -39,6 +39,20 @@ describe("discoverProjects", () => {
     assert.deepEqual(projects.map((project) => project.name), ["App (Work)", "App (Home)"]);
   });
 
+  it("lists a project reached from two overlapping workspace folders once, as its own workspace folder", () => {
+    const parent: FolderListing = {
+      key: "file:///r",
+      name: "r",
+      entries: ["README.md"],
+      children: [{ key: "file:///r/app", name: "app", entries: ["Package.swift"] }],
+    };
+    const child: FolderListing = { key: "file:///r/app", name: "app", entries: ["Package.swift"], children: [] };
+    for (const folders of [[parent, child], [child, parent]]) {
+      const projects = discoverProjects(folders);
+      assert.deepEqual(projects, [{ key: "file:///r/app", name: "app", folderKey: "file:///r/app", folderName: "app", nested: false }]);
+    }
+  });
+
   it("finds nothing in a folder without projects", () => {
     assert.deepEqual(discoverProjects([folder("Notes", ["notes.txt"], [["Drafts", ["a.md"]]])]), []);
   });
