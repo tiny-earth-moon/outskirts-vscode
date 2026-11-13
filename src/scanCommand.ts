@@ -16,6 +16,7 @@ import { folderAliases } from "./realFolders";
 import { printsAbsolutePathsWhenAsked, printsResultsWhenAsked } from "./version";
 import { relativeResultsBase } from "./location";
 import { checkRelativeLocations } from "./relativeResults";
+import { toEditorColumns } from "./editorColumns";
 
 export class Scanner {
   private controller: AbortController | undefined;
@@ -129,7 +130,9 @@ export class Scanner {
     const base = relativeResultsBase(cwd, extra);
     await checkRelativeLocations(results, base);
     const aliases = await folderAliases([cwd, project.workspaceFolder.uri.fsPath]);
-    const findings = toFindings(results, base, aliases);
+    const findings = await toEditorColumns(toFindings(results, base, aliases), (message) => {
+      this.output.appendLine(message);
+    });
     this.store.set(project.key, findings, severity, Date.now());
     return findings.length;
   }

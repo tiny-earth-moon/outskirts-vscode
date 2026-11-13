@@ -24,6 +24,19 @@ export function parseLocation(location: string, folder: string, aliases: readonl
   };
 }
 
+export function utf16Column(line: string, byteColumn: number): number {
+  let bytes = 0;
+  let units = 0;
+  for (const character of line) {
+    if (bytes >= byteColumn) {
+      return units;
+    }
+    bytes += Buffer.byteLength(character, "utf8");
+    units += character.length;
+  }
+  return units + Math.max(byteColumn - bytes, 0);
+}
+
 export function isRelativeLocation(location: string): boolean {
   const file = /^(.+):\d+:\d+$/.exec(location)?.[1];
   return file !== undefined && !path.isAbsolute(file);
