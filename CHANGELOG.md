@@ -1,19 +1,13 @@
 # Changelog
 
-## 0.1.0 (unreleased)
+## 0.1.0 (2026-11-13)
 
-- `outskirts: Scan` runs outskirts in the project and shows its results as diagnostics.
-- A message gives the number of results when the scan ends, or says that nothing is unused.
-- `outskirts: Clear Results` removes them.
-- Settings `outskirts.path`, `outskirts.arguments`, `outskirts.skipBuild` and `outskirts.severity`.
-- An outskirts view in the activity bar lists the results grouped by file or by kind, with buttons to scan, cancel, clear, regroup and open the settings.
-- A collapsible Scan Options view under the results shows the options of a project with their values: reuse the existing index (checkbox), severity, extra arguments, grouping, and the outskirts executable with its version; its title bar scans that project, selects another project and opens the settings. `outskirts: Show Scan Options` reveals it.
-- `outskirts: Cancel Scan` stops a running scan; a second scan is refused while one runs.
-- A status bar item shows the number of results and opens the view.
-- Each project keeps its own results, with a node per project in the side bar, buttons to scan or clear one project, and an "All projects" choice that scans them in turn. A project is a workspace folder whose root holds a Swift package, an Xcode project or an outskirts configuration, or else such a direct sub-directory of a workspace folder, so a parent folder of several repositories works too; the list follows folder and project file changes and has a Refresh button.
-- Results show the declaration name first, then the kind of finding and the line.
-- Notifications name the scanned project ("12 results in App.") and no longer repeat "outskirts:", which VS Code already shows as their source.
-- `outskirts: Fix with Agent` starts a coding agent chosen in the options (Claude Code, GitHub Copilot CLI, Codex CLI, Gemini CLI, Cursor Agent, or a custom command; a known agent counts as installed only if `--version` runs) in a terminal in the project directory, with a prompt listing the results of a project, a file or a single result; the agent edits, you review and scan again. Settings `outskirts.agent` and `outskirts.agentCommand`, read from user settings only; no shell, trusted workspaces only.
-- The results of a file changed after the scan, in the editor or on disk, are marked stale: their diagnostics are removed, the tree marks them, the project and the status bar count the files to rescan, and Fix with Agent leaves them out until the next scan.
-- The executable row of the Scan Options view is labelled "Executable".
-- The agent no longer builds the project or runs its tests by default: it checks each removal by searching the code and ends with the command to run to verify. Setting `outskirts.agentVerify` (user settings only), shown as the "Agent verifies by building" checkbox in Scan Options, restores building.
+First release.
+
+- **Scan**: `outskirts: Scan` runs the installed outskirts on a project as a cancellable background task and shows the unused code in the Problems panel and in the editor. A message gives the number of results when the scan ends.
+- **Side bar**: an outskirts view in the activity bar lists the results grouped by file or by kind, with buttons to scan, cancel, clear and regroup, and a status bar item with the total.
+- **Several projects**: each project keeps its own results, with a node per project and an "All projects" scan. A project is a workspace folder, or a directory one level below it, that holds a Swift package, an Xcode project or an outskirts configuration.
+- **Scan Options**: a collapsible view shows the options of a project with their values: reuse the existing index, severity, extra arguments, grouping, the outskirts executable and its version, and the agent.
+- **Fix with Agent**: hands the results of a project, a file or a single result to a coding agent started in a terminal (Claude Code, GitHub Copilot CLI, Codex CLI, Gemini CLI, Cursor Agent, or a custom command). The agent edits and you review; it does not build the project unless `outskirts.agentVerify` is set.
+- **Stale results**: the results of a file changed after the scan are marked stale and their diagnostics removed until the next scan.
+- **Safety**: nothing runs in an untrusted workspace; the outskirts executable and the agent are never taken from workspace settings; processes are started without a shell.

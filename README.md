@@ -1,6 +1,6 @@
 # outskirts for VS Code
 
-Shows the unused Swift code found by [outskirts](https://github.com/tiny-earth-moon/outskirts) as diagnostics in the editor and the Problems panel.
+Shows the unused Swift code found by [outskirts](https://github.com/tiny-earth-moon/outskirts) in a side bar, in the editor and in the Problems panel, for each project of the workspace, and can hand the results to a coding agent.
 
 The extension does not analyze Swift itself: it runs the installed `outskirts` executable with `scan --format json --quiet` in the project directory and shows each result at its location.
 
