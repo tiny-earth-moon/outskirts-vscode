@@ -28,8 +28,15 @@ const verifyInstructions = [
   "- End with a summary of what you removed and what you kept, and why.",
 ];
 
+export const replacementCharacter = "\uFFFD";
+
+const subdivisionFlag = "\u{1F3F4}[\u{E0030}-\u{E0039}\u{E0061}-\u{E007A}]{1,6}\u{E007F}";
+const joinerBetweenLetters = "(?<=[\\p{L}\\p{M}\\p{Extended_Pictographic}\\p{Emoji_Modifier}\\u{FE0F}])[\\u{200C}\\u{200D}](?=[\\p{L}\\p{Extended_Pictographic}])";
+const invisible = "([\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\u{115F}\\u{1160}\\u{3164}\\u{FFA0}]+)";
+const sanitizePattern = new RegExp(`${subdivisionFlag}|${joinerBetweenLetters}|${invisible}`, "gu");
+
 export function sanitize(text: string): string {
-  return text.replace(/[\p{Cc}‪-‮⁦-⁩]/gu, "");
+  return text.replace(sanitizePattern, (match: string, hidden: string | undefined) => (hidden === undefined ? match : replacementCharacter));
 }
 
 export function buildPrompt(input: PromptInput, limit = maxPromptResults): string {
