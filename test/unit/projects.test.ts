@@ -59,6 +59,12 @@ describe("discoverProjects", () => {
 });
 
 describe("isCandidateDirectory", () => {
+  it("skips the dependency directories, which hold the projects of others", () => {
+    for (const name of ["Pods", "Carthage", "vendor", "Vendor", "SourcePackages"]) {
+      assert.equal(isCandidateDirectory(name, true, false), false, name);
+    }
+  });
+
   it("keeps plain directories", () => {
     assert.equal(isCandidateDirectory("App", true, false), true);
   });

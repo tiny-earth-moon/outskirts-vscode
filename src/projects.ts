@@ -1,6 +1,6 @@
 import { isScannableRoot, markerGlob } from "./scannable";
 
-const skippedDirectories = new Set(["node_modules", "build", "DerivedData"]);
+const skippedDirectories = new Set(["node_modules", "build", "DerivedData", "Pods", "Carthage", "vendor", "Vendor", "SourcePackages"]);
 
 export interface DirectoryListing {
   key: string;

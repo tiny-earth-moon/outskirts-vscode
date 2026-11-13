@@ -15,6 +15,7 @@
 - **Removed projects**: a scan whose project leaves the list while it runs, its folder removed from the workspace or deleted, is stopped and its results dropped, instead of being counted in the status bar and the Problems panel for a project the side bar no longer shows.
 - **Project list**: an Xcode project or workspace added or removed, at the root of a workspace folder or one level below, and a sub-directory added or deleted as a whole, now update the list of projects, as `Package.swift` and the configuration files already did.
 - **Activation**: the extension starts with a workspace that holds an Xcode project or workspace by looking for the file inside it (`project.pbxproj`, `contents.xcworkspacedata`), since `workspaceContains` matches its glob patterns against files only and an Xcode project or workspace is a folder.
+- **Dependency directories**: `Pods`, `Carthage`, `vendor`, `Vendor` and `SourcePackages` are no longer offered as projects, like `node_modules`, `build` and `DerivedData` already.
 
 ## 0.1.0 (2026-11-13)
 
