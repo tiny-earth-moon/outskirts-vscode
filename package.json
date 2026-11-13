@@ -24,6 +24,8 @@
   "activationEvents": [
     "workspaceContains:Package.swift",
     "workspaceContains:*.xcodeproj",
+    "workspaceContains:*.xcworkspace",
+    "workspaceContains:project.yml",
     "workspaceContains:.outskirts.yml",
     "workspaceContains:.periphery.yml"
   ],
@@ -48,6 +50,18 @@
         "icon": "$(play)"
       },
       {
+        "command": "outskirts.scanView",
+        "title": "Scan",
+        "category": "outskirts",
+        "icon": "$(play)"
+      },
+      {
+        "command": "outskirts.scanFolder",
+        "title": "Scan This Folder",
+        "category": "outskirts",
+        "icon": "$(play)"
+      },
+      {
         "command": "outskirts.cancel",
         "title": "Cancel Scan",
         "category": "outskirts",
@@ -56,6 +70,12 @@
       {
         "command": "outskirts.clear",
         "title": "Clear Results",
+        "category": "outskirts",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "outskirts.clearFolder",
+        "title": "Clear This Folder",
         "category": "outskirts",
         "icon": "$(clear-all)"
       },
@@ -142,12 +162,17 @@
     "viewsWelcome": [
       {
         "view": "outskirts.results",
-        "contents": "Find the unused Swift code of this workspace with outskirts.\n[Scan](command:outskirts.scan)",
+        "contents": "No Swift package or Xcode project in this workspace. Open a folder whose root holds Package.swift, an Xcode project or workspace, project.yml or .outskirts.yml.",
+        "when": "outskirts.state == unavailable"
+      },
+      {
+        "view": "outskirts.results",
+        "contents": "Find the unused Swift code of this workspace with outskirts.\n[Scan](command:outskirts.scanView)",
         "when": "outskirts.state == none && !outskirts.scanning"
       },
       {
         "view": "outskirts.results",
-        "contents": "No unused code found.\n[Scan Again](command:outskirts.scan)",
+        "contents": "No unused code found.\n[Scan Again](command:outskirts.scanView)",
         "when": "outskirts.state == empty && !outskirts.scanning"
       },
       {
@@ -159,8 +184,8 @@
     "menus": {
       "view/title": [
         {
-          "command": "outskirts.scan",
-          "when": "view == outskirts.results && !outskirts.scanning",
+          "command": "outskirts.scanView",
+          "when": "view == outskirts.results && !outskirts.scanning && outskirts.state != unavailable",
           "group": "navigation@1"
         },
         {
@@ -185,7 +210,7 @@
         },
         {
           "command": "outskirts.clear",
-          "when": "view == outskirts.results && outskirts.state != none",
+          "when": "view == outskirts.results && outskirts.state != none && outskirts.state != unavailable",
           "group": "navigation@4"
         },
         {
@@ -206,6 +231,30 @@
         {
           "command": "outskirts.groupByKind",
           "when": "outskirts.groupBy != kind"
+        },
+        {
+          "command": "outskirts.scanView",
+          "when": "false"
+        },
+        {
+          "command": "outskirts.scanFolder",
+          "when": "false"
+        },
+        {
+          "command": "outskirts.clearFolder",
+          "when": "false"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "outskirts.scanFolder",
+          "when": "view == outskirts.results && viewItem == folder && !outskirts.scanning",
+          "group": "inline@1"
+        },
+        {
+          "command": "outskirts.clearFolder",
+          "when": "view == outskirts.results && viewItem == folder",
+          "group": "inline@2"
         }
       ]
     }

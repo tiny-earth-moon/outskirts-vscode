@@ -2,38 +2,66 @@ import { Finding } from "./findings";
 
 export type ResultsState = "none" | "empty" | "results";
 
+export interface FolderResults {
+  readonly findings: readonly Finding[];
+  readonly severity: string;
+  readonly scannedAt: number;
+}
+
+export function resultsState(entry: FolderResults | undefined): ResultsState {
+  if (entry === undefined) {
+    return "none";
+  }
+  return entry.findings.length === 0 ? "empty" : "results";
+}
+
 export class ResultsStore {
-  private current: readonly Finding[] = [];
-  private scanned = false;
-  private level = "warning";
+  private readonly entries = new Map<string, FolderResults>();
   private readonly listeners = new Set<() => void>();
 
-  get findings(): readonly Finding[] {
-    return this.current;
+  get(folder: string): FolderResults | undefined {
+    return this.entries.get(folder);
   }
 
-  get severity(): string {
-    return this.level;
+  all(): ReadonlyMap<string, FolderResults> {
+    return this.entries;
   }
 
-  get state(): ResultsState {
-    if (!this.scanned) {
-      return "none";
+  get total(): number {
+    let count = 0;
+    for (const entry of this.entries.values()) {
+      count += entry.findings.length;
     }
-    return this.current.length === 0 ? "empty" : "results";
+    return count;
   }
 
-  set(findings: readonly Finding[], severity: string): void {
-    this.current = findings;
-    this.level = severity;
-    this.scanned = true;
+  set(folder: string, findings: readonly Finding[], severity: string, scannedAt: number): void {
+    this.entries.set(folder, { findings, severity, scannedAt });
     this.notify();
   }
 
-  clear(): void {
-    this.current = [];
-    this.scanned = false;
-    this.notify();
+  clear(folder: string): void {
+    if (this.entries.delete(folder)) {
+      this.notify();
+    }
+  }
+
+  clearAll(): void {
+    if (this.entries.size > 0) {
+      this.entries.clear();
+      this.notify();
+    }
+  }
+
+  retain(folders: readonly string[]): void {
+    const kept = new Set(folders);
+    const removed = [...this.entries.keys()].filter((folder) => !kept.has(folder));
+    for (const folder of removed) {
+      this.entries.delete(folder);
+    }
+    if (removed.length > 0) {
+      this.notify();
+    }
   }
 
   onDidChange(listener: () => void): { dispose(): void } {

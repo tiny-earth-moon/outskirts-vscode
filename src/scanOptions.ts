@@ -1,11 +1,11 @@
 import * as vscode from "vscode";
-import { pickFolder } from "./pickFolder";
+import { pickOneFolder } from "./pickFolder";
 import { joinArguments, tokenize } from "./tokenize";
 
 const severities = ["error", "warning", "information", "hint"];
 
-export async function editScanOptions(): Promise<void> {
-  const folder = await pickFolder();
+export async function editScanOptions(folders: readonly vscode.WorkspaceFolder[]): Promise<void> {
+  const folder = await pickOneFolder(folders);
   if (folder === undefined) {
     return;
   }

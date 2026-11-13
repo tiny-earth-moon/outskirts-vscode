@@ -1,20 +1,22 @@
 import * as vscode from "vscode";
-import { Finding } from "./findings";
+import { FolderInfo } from "./folderModel";
+import { isFolderNode, isResultGroup, treeChildren, TreeNode } from "./folderTree";
 import { ResultsStore } from "./resultsStore";
-import { GroupBy, groupFindings, leafDescription, leafLabel, ResultGroup } from "./treeModel";
+import { GroupBy, leafDescription, leafLabel } from "./treeModel";
 
-export type ResultNode = ResultGroup | Finding;
+export type ResultNode = TreeNode;
 
 export class ResultsTreeProvider implements vscode.TreeDataProvider<ResultNode> {
   private readonly changed = new vscode.EventEmitter<undefined>();
   readonly onDidChangeTreeData = this.changed.event;
   private mode: GroupBy = "file";
 
-  constructor(private readonly store: ResultsStore, private readonly root: () => string | undefined) {
-    store.onDidChange(() => {
-      this.changed.fire(undefined);
-    });
-  }
+  constructor(
+    private readonly store: ResultsStore,
+    private readonly folders: () => readonly FolderInfo[],
+    private readonly scanning: () => string | undefined,
+    private readonly now: () => number = Date.now,
+  ) {}
 
   get groupBy(): GroupBy {
     return this.mode;
@@ -22,20 +24,39 @@ export class ResultsTreeProvider implements vscode.TreeDataProvider<ResultNode> 
 
   set groupBy(mode: GroupBy) {
     this.mode = mode;
+    this.refresh();
+  }
+
+  refresh(): void {
     this.changed.fire(undefined);
   }
 
   getChildren(node?: ResultNode): ResultNode[] {
-    if (node === undefined) {
-      return groupFindings(this.store.findings, this.mode, this.root());
-    }
-    return isGroup(node) ? node.findings : [];
+    const context = {
+      folders: this.folders(),
+      results: this.store.all(),
+      groupBy: this.mode,
+      scanning: this.scanning(),
+      now: this.now(),
+    };
+    return treeChildren(context, node);
   }
 
   getTreeItem(node: ResultNode): vscode.TreeItem {
-    if (isGroup(node)) {
+    if (isFolderNode(node)) {
+      const state = node.expanded ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed;
+      const item = new vscode.TreeItem(node.name, state);
+      item.id = `folder:${node.key}`;
+      item.description = node.description;
+      item.tooltip = node.root;
+      item.contextValue = "folder";
+      item.iconPath = vscode.ThemeIcon.Folder;
+      item.resourceUri = vscode.Uri.parse(node.key);
+      return item;
+    }
+    if (isResultGroup(node)) {
       const item = new vscode.TreeItem(node.label, vscode.TreeItemCollapsibleState.Expanded);
-      item.id = `${this.mode}:${node.key}`;
+      item.id = `${node.folder ?? ""}:${this.mode}:${node.key}`;
       item.description = [node.description, String(node.findings.length)].filter((part) => part !== undefined).join(" · ");
       item.iconPath = this.mode === "file" ? vscode.ThemeIcon.File : new vscode.ThemeIcon("symbol-misc");
       if (this.mode === "file") {
@@ -59,8 +80,4 @@ export class ResultsTreeProvider implements vscode.TreeDataProvider<ResultNode> 
   dispose(): void {
     this.changed.dispose();
   }
-}
-
-function isGroup(node: ResultNode): node is ResultGroup {
-  return "findings" in node;
 }

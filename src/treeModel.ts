@@ -5,6 +5,7 @@ export type GroupBy = "file" | "kind";
 
 export interface ResultGroup {
   key: string;
+  folder?: string;
   label: string;
   description?: string;
   findings: Finding[];
@@ -36,13 +37,14 @@ export function hintLabel(code: string | undefined): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
-export function groupFindings(findings: readonly Finding[], groupBy: GroupBy, root?: string): ResultGroup[] {
+export function groupFindings(findings: readonly Finding[], groupBy: GroupBy, root?: string, folder?: string): ResultGroup[] {
   const groups = new Map<string, ResultGroup>();
   for (const finding of findings) {
     const key = groupBy === "file" ? finding.file : (finding.code ?? "");
     let group = groups.get(key);
     if (group === undefined) {
       group = groupBy === "file" ? fileGroup(finding.file, root) : { key, label: hintLabel(finding.code), findings: [] };
+      group.folder = folder;
       groups.set(key, group);
     }
     group.findings.push(finding);
@@ -55,12 +57,15 @@ export function groupFindings(findings: readonly Finding[], groupBy: GroupBy, ro
 }
 
 export function leafLabel(finding: Finding): string {
-  return `${finding.kind} ${finding.name}`;
+  return finding.name;
 }
 
 export function leafDescription(finding: Finding, groupBy: GroupBy): string {
   const line = `line ${String(finding.line + 1)}`;
-  return groupBy === "file" ? `${hintLabel(finding.code)}, ${line}` : `${path.basename(finding.file)}, ${line}`;
+  if (groupBy === "file") {
+    return `${hintLabel(finding.code).toLowerCase()} ${finding.kind} · ${line}`;
+  }
+  return `${finding.kind} · ${path.basename(finding.file)} · ${line}`;
 }
 
 function fileGroup(file: string, root: string | undefined): ResultGroup {

@@ -1,9 +1,14 @@
 import * as vscode from "vscode";
+import { FolderInfo } from "./folderModel";
 import { ResultsStore } from "./resultsStore";
 import { Scanner } from "./scanCommand";
-import { statusText } from "./summary";
+import { statusTooltip } from "./summary";
 
-export function createStatusBar(store: ResultsStore, scanner: Scanner): vscode.Disposable {
+export function createStatusBar(
+  store: ResultsStore,
+  scanner: Scanner,
+  folders: () => readonly FolderInfo[],
+): { update(): void; dispose(): void } {
   const item = vscode.window.createStatusBarItem("outskirts.status", vscode.StatusBarAlignment.Left);
   item.name = "outskirts";
   item.command = "outskirts.results.focus";
@@ -12,19 +17,24 @@ export function createStatusBar(store: ResultsStore, scanner: Scanner): vscode.D
       item.text = "$(loading~spin) outskirts";
       item.tooltip = "outskirts: scanning";
       item.show();
-    } else if (store.state === "none") {
+    } else if (store.all().size === 0) {
       item.hide();
     } else {
-      item.text = `$(search) ${statusText(store.findings.length)}`;
-      item.tooltip = "Show the outskirts results";
+      item.text = `$(circle-large-outline) ${String(store.total)}`;
+      item.tooltip = statusTooltip(
+        folders().map((folder) => ({ name: folder.name, count: store.get(folder.key)?.findings.length })),
+      );
       item.show();
     }
   };
   const subscriptions = [store.onDidChange(update), scanner.onDidChangeRunning(update)];
-  return new vscode.Disposable(() => {
-    subscriptions.forEach((subscription) => {
-      subscription.dispose();
-    });
-    item.dispose();
-  });
+  return {
+    update,
+    dispose: () => {
+      subscriptions.forEach((subscription) => {
+        subscription.dispose();
+      });
+      item.dispose();
+    },
+  };
 }

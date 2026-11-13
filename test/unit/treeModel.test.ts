@@ -40,9 +40,9 @@ describe("groupFindings", () => {
 describe("tree labels", () => {
   it("names the declaration and its line", () => {
     const item = finding("/w/A.swift", 4, "unused", "helper()");
-    assert.equal(leafLabel(item), "function helper()");
-    assert.equal(leafDescription(item, "file"), "Unused, line 5");
-    assert.equal(leafDescription(item, "kind"), "A.swift, line 5");
+    assert.equal(leafLabel(item), "helper()");
+    assert.equal(leafDescription(item, "file"), "unused function · line 5");
+    assert.equal(leafDescription(item, "kind"), "function · A.swift · line 5");
   });
 
   it("derives a label for an unknown hint", () => {
