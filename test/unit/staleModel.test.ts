@@ -84,6 +84,17 @@ describe("stale results", () => {
     assert.deepEqual(watchRoots(new ResultsStore().all(), (key) => (key === "app" ? "/app" : undefined), ["app", "gone"]), [{ base: "/app", pattern: "**/*" }]);
   });
 
+  it("tells the stale results of a large project in linear time", () => {
+    const results = new ResultsStore();
+    const many = Array.from({ length: 100000 }, (_, index) => finding(`/big/F${String(index % 500)}.swift`, index));
+    results.set("big", many, "warning", 1);
+    results.markStale("big", "/big/F0.swift");
+    const started = Date.now();
+    const stale = many.filter((item) => isStaleFinding(results.all(), item)).length;
+    assert.equal(stale, 200);
+    assert.ok(Date.now() - started < 300, `${String(Date.now() - started)} ms`);
+  });
+
   it("indexes the projects of a changed or deleted file", () => {
     const index = projectsByFile(store().all());
     assert.deepEqual(index.get("/app/A.swift"), ["app", "other"]);

@@ -5,9 +5,16 @@ import { FolderResults } from "./resultsStore";
 export const staleScopeMessage = "Scan again: the results of this file are out of date.";
 export const staleHint = "Scan again to refresh the results of the changed files.";
 
+const members = new WeakMap<FolderResults, ReadonlySet<Finding>>();
+
 export function isStaleFinding(results: ReadonlyMap<string, FolderResults>, finding: Finding): boolean {
   for (const entry of results.values()) {
-    if (entry.findings.includes(finding)) {
+    let findings = members.get(entry);
+    if (findings === undefined) {
+      findings = new Set(entry.findings);
+      members.set(entry, findings);
+    }
+    if (findings.has(finding)) {
       return entry.stale.has(finding.file);
     }
   }

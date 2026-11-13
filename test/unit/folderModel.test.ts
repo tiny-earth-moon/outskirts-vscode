@@ -1,6 +1,6 @@
 import * as assert from "node:assert/strict";
 import { Finding } from "../../src/findings";
-import { folderDescription, folderNode, relativeTime, viewState } from "../../src/folderModel";
+import { folderDescription, folderNode, nextDescriptionChange, nextTimeChange, relativeTime, viewState } from "../../src/folderModel";
 import { FolderResults } from "../../src/resultsStore";
 
 const finding: Finding = { file: "/a/A.swift", line: 0, column: 0, kind: "function", name: "a()", message: "Unused" };
@@ -11,6 +11,28 @@ const library = { key: "file:///library", name: "Library", root: "/library" };
 function results(count: number, ago: number): FolderResults {
   return { findings: Array<Finding>(count).fill(finding), severity: "warning", scannedAt: now - ago, stale: new Set<string>() };
 }
+
+describe("time of the last scan in the side bar", () => {
+  it("is refreshed when its text changes: each minute, then each hour, then each day", () => {
+    assert.equal(nextTimeChange(30_000), 30_000);
+    assert.equal(relativeTime(30_000 + nextTimeChange(30_000)), "1 min ago");
+    assert.equal(nextTimeChange(59 * 60_000 + 10_000), 50_000);
+    assert.equal(nextTimeChange(90 * 60_000), 30 * 60_000);
+    assert.equal(nextTimeChange(30 * 3_600_000), 18 * 3_600_000);
+  });
+
+  it("is refreshed for the next project to change, and not at all without results", () => {
+    const entry = (findings: number, scannedAt: number) => ({
+      findings: Array.from({ length: findings }, () => ({ file: "/a", line: 0, column: 0, kind: "class", name: "A", message: "m" })),
+      severity: "warning",
+      scannedAt,
+      stale: new Set<string>(),
+    });
+    assert.equal(nextDescriptionChange(new Map([["a", entry(1, 0)], ["b", entry(1, 50_000)]]), 70_000), 40_000);
+    assert.equal(nextDescriptionChange(new Map([["a", entry(0, 0)]]), 70_000), undefined);
+    assert.equal(nextDescriptionChange(new Map(), 70_000), undefined);
+  });
+});
 
 describe("relativeTime", () => {
   it("rounds down to minutes, hours or days", () => {

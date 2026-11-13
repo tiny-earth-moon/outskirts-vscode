@@ -22,6 +22,7 @@
 - **Severity**: changing `outskirts.severity`, in the settings or from the Scan Options view, updates the diagnostics already shown, instead of waiting for the next scan.
 - **Changes on disk**: one watcher per project replaces one per file with results, which were all recreated at each change; a file whose name holds `[`, `{`, `*` or `?`, read as a glob pattern until now, is followed too.
 - **Changes during a scan**: a file edited or changed on disk while its project is scanned has its results stale as soon as they arrive, instead of looking fresh.
+- **Large projects**: the side bar tells stale results apart in linear time, instead of searching every result of the project for each one shown (about a second for 100 000 results). The time of the last scan of a project ("just now", "5 min ago") now follows the clock instead of staying as it was when the view was last redrawn.
 
 ## 0.1.0 (2026-11-13)
 
