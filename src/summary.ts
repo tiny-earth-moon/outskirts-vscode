@@ -1,15 +1,11 @@
-export function scanSummary(count: number, folder?: string): string {
-  const where = folder === undefined ? "" : ` in ${folder}`;
-  if (count === 0) {
-    return `outskirts: no unused code found${where}.`;
-  }
-  return `outskirts: ${statusText(count)}${where}.`;
+export function scanSummary(count: number, folder: string): string {
+  return count === 0 ? `No unused code found in ${folder}.` : `${statusText(count)} in ${folder}.`;
 }
 
 export function sequenceSummary(counts: readonly number[]): string {
   const total = counts.reduce((sum, count) => sum + count, 0);
   const folders = counts.length === 1 ? "1 folder" : `${String(counts.length)} folders`;
-  return total === 0 ? `outskirts: no unused code found in ${folders}.` : `outskirts: ${statusText(total)} in ${folders}.`;
+  return total === 0 ? `No unused code found in ${folders}.` : `${statusText(total)} in ${folders}.`;
 }
 
 export function statusText(count: number): string {

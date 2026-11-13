@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { severityFromSetting } from "./diagnostics";
 import { toFindings } from "./findings";
-import { interpretRun, ScanFailedError } from "./outcome";
+import { interpretRun } from "./outcome";
 import { ResultsStore } from "./resultsStore";
 import { CancelledError, ExecutableNotFoundError, runProcess } from "./runProcess";
 import { buildScanArguments } from "./scanArguments";
@@ -21,7 +21,6 @@ export class Scanner {
   constructor(
     private readonly store: ResultsStore,
     private readonly output: vscode.OutputChannel,
-    private readonly namesFolders: () => boolean,
   ) {}
 
   get running(): boolean {
@@ -39,11 +38,11 @@ export class Scanner {
 
   async scan(folders: readonly vscode.WorkspaceFolder[]): Promise<void> {
     if (this.running) {
-      void vscode.window.showWarningMessage("outskirts: a scan is already running.");
+      void vscode.window.showWarningMessage("A scan is already running.");
       return;
     }
     if (!vscode.workspace.isTrusted) {
-      void vscode.window.showErrorMessage("outskirts: a scan builds the project, so it only runs in a trusted workspace.");
+      void vscode.window.showErrorMessage("A scan builds the project, so it only runs in a trusted workspace.");
       return;
     }
     this.cancelled = false;
@@ -57,7 +56,7 @@ export class Scanner {
       try {
         counts.push(await this.run(folder, controller));
         if (folders.length === 1) {
-          void announce(scanSummary(counts[0], this.namesFolders() ? folder.name : undefined), counts[0]);
+          void announce(scanSummary(counts[0], folder.name), counts[0]);
         }
       } catch (error) {
         if (error instanceof CancelledError) {
@@ -86,7 +85,7 @@ export class Scanner {
     const cwd = folder.uri.fsPath;
     const severity = config.get<string>("severity", "warning");
     severityFromSetting(severity);
-    const title = this.namesFolders() ? `outskirts: scanning ${folder.name}` : "outskirts: scanning";
+    const title = `Scanning ${folder.name}`;
     const run = await vscode.window.withProgress(
       { location: vscode.ProgressLocation.Notification, title, cancellable: true },
       (_progress, token) => {
@@ -135,8 +134,7 @@ async function report(error: unknown, output: vscode.OutputChannel): Promise<voi
     return;
   }
   const openOutput = "Open Output";
-  const detail = error instanceof ScanFailedError ? message : `outskirts: ${message}`;
-  const choice = await vscode.window.showErrorMessage(detail, openOutput);
+  const choice = await vscode.window.showErrorMessage(message, openOutput);
   if (choice === openOutput) {
     output.show();
   }

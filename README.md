@@ -10,7 +10,7 @@ outskirts installed, e.g. `brew install tiny-earth-moon/tap/outskirts`, and a pr
 
 ## Commands
 
-- **outskirts: Scan** scans the workspace folder and replaces its previous results; with several folders it asks which one, or all of them. The scan can be cancelled from its notification; when it ends, a message gives the number of results.
+- **outskirts: Scan** scans the workspace folder and replaces its previous results; with several folders it asks which one, or all of them. The scan can be cancelled from its notification; when it ends, a message gives the number of results and names the folder.
 - **outskirts: Cancel Scan** stops the running scan. Only one scan runs at a time.
 - **outskirts: Clear Results** removes the results of every folder.
 - **outskirts: Scan Options…** toggles reusing the existing index, sets the severity and edits the extra arguments of a workspace folder. Arguments are quoted like in a shell, but no shell is used.

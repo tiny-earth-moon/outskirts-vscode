@@ -22,7 +22,7 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
   const output = vscode.window.createOutputChannel("outskirts");
   const store = new ResultsStore();
   const scannable = new ScannableFolders();
-  const scanner = new Scanner(store, output, () => scannable.folders.length > 1);
+  const scanner = new Scanner(store, output);
   const tree = new ResultsTreeProvider(store, () => scannable.infos, () => scanner.scanning);
   const statusBar = createStatusBar(store, scanner, () => scannable.infos);
   const setContext = (key: string, value: unknown): void => {
@@ -44,7 +44,7 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
   };
   const scanPicked = async (preselect: boolean): Promise<void> => {
     if (scanner.running) {
-      void vscode.window.showWarningMessage("outskirts: a scan is already running.");
+      void vscode.window.showWarningMessage("A scan is already running.");
       return;
     }
     const folders = scannable.folders;

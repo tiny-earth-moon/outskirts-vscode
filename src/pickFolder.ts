@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-const noFolderMessage = "outskirts: open a folder that holds a Swift package or an Xcode project.";
+const noFolderMessage = "Open a folder that holds a Swift package or an Xcode project.";
 
 interface FolderItem extends vscode.QuickPickItem {
   folders: readonly vscode.WorkspaceFolder[];
