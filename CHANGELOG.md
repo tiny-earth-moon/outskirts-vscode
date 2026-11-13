@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **Xcode projects**: a folder that holds only an Xcode workspace or project is scanned with `--project`, the workspace first; with several, the scan asks to choose one. A missing `--project` or `--schemes` is shown with the error of outskirts and the setting that fixes it. An XcodeGen `project.yml` alone is no longer listed as a project.
+
 ## 0.1.0 (2026-11-13)
 
 First release.

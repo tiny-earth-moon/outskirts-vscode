@@ -4,7 +4,7 @@ import { Project, projectInfo } from "./project";
 import { findProjects } from "./projectDiscovery";
 import { projectForUri } from "./projects";
 
-const markers = "{Package.swift,project.yml,.outskirts.yml,.periphery.yml}";
+const markers = "{Package.swift,.outskirts.yml,.periphery.yml}";
 const debounce = 300;
 
 export class ProjectList {

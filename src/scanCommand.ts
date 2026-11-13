@@ -9,6 +9,7 @@ import { resolveExecutable } from "./executable";
 import { Project } from "./project";
 import { scanSummary, sequenceSummary } from "./summary";
 import { installHint } from "./optionsModel";
+import { projectArguments, readProjectFolder } from "./xcodeProject";
 
 export class Scanner {
   private controller: AbortController | undefined;
@@ -80,8 +81,12 @@ export class Scanner {
   private async run(project: Project, controller: AbortController): Promise<number> {
     const config = vscode.workspace.getConfiguration("outskirts", project.workspaceFolder.uri);
     const executable = resolveExecutable(config.inspect<string>("path"));
-    const args = buildScanArguments(config.get<string[]>("arguments", []), config.get<boolean>("skipBuild", false));
     const cwd = project.uri.fsPath;
+    const extra = config.get<string[]>("arguments", []);
+    const args = buildScanArguments(extra, {
+      skipBuild: config.get<boolean>("skipBuild", false),
+      project: projectArguments(await readProjectFolder(cwd), extra),
+    });
     const severity = config.get<string>("severity", "warning");
     severityFromSetting(severity);
     const title = `Scanning ${project.name}`;

@@ -8,7 +8,13 @@ describe("buildScanArguments", () => {
   });
 
   it("asks to reuse the index before the extra arguments when skipBuild is set", () => {
-    assert.deepEqual(buildScanArguments(["--schemes", "App"], true), ["scan", "--format", "json", "--quiet", "--skip-build", "--schemes", "App"]);
+    assert.deepEqual(buildScanArguments(["--schemes", "App"], { skipBuild: true }), ["scan", "--format", "json", "--quiet", "--skip-build", "--schemes", "App"]);
+  });
+
+  it("names the Xcode project before the extra arguments", () => {
+    assert.deepEqual(buildScanArguments(["--schemes", "App"], { skipBuild: true, project: ["--project", "App.xcworkspace"] }), [
+      "scan", "--format", "json", "--quiet", "--skip-build", "--project", "App.xcworkspace", "--schemes", "App",
+    ]);
   });
 });
 

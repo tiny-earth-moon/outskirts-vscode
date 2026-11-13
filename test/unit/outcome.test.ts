@@ -24,6 +24,24 @@ describe("interpretRun", () => {
     assert.throws(() => interpretRun({ exitCode: 64, stdout: "", stderr: "Usage" }), ScanFailedError);
   });
 
+  it("shows the error of outskirts as is with the setting that fixes it when an Xcode project has no schemes", () => {
+    assert.throws(
+      () => interpretRun({ exitCode: 1, stdout: "", stderr: "Error: The '--schemes' option is required.\n" }),
+      (error: unknown) =>
+        error instanceof ScanFailedError &&
+        error.message.includes("Error: The '--schemes' option is required.") &&
+        error.message.includes('"--schemes <scheme>" in Extra arguments, or "schemes:" in .outskirts.yml'),
+    );
+  });
+
+  it("tells how to name the Xcode project when outskirts cannot identify it", () => {
+    const stderr = "Error: Failed to identify project in the current directory. For Xcode projects use the '--project' option.\n";
+    assert.throws(
+      () => interpretRun({ exitCode: 1, stdout: "", stderr }),
+      (error: unknown) => error instanceof ScanFailedError && error.message.includes('"--project <name>" in Extra arguments'),
+    );
+  });
+
   it("reports invalid JSON on success explicitly", () => {
     assert.throws(() => interpretRun({ exitCode: 0, stdout: "nope", stderr: "" }), InvalidOutputError);
   });

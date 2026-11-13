@@ -8,8 +8,18 @@ export interface ProcessRun {
 
 export class ScanFailedError extends Error {
   constructor(readonly exitCode: number | null, readonly stderrTail: string) {
-    super(`outskirts exited with status ${String(exitCode)}.${stderrTail === "" ? "" : `\n${stderrTail}`}`);
+    super(`outskirts exited with status ${String(exitCode)}.${stderrTail === "" ? "" : `\n${stderrTail}`}${hintFor(stderrTail)}`);
   }
+}
+
+const hints: readonly [string, string][] = [
+  ["Failed to identify project", "Name the Xcode project or workspace with \"--project <name>\" in Extra arguments, or \"project:\" in .outskirts.yml."],
+  ["'--schemes' option is required", "Name the schemes to build with \"--schemes <scheme>\" in Extra arguments, or \"schemes:\" in .outskirts.yml."],
+];
+
+function hintFor(stderr: string): string {
+  const hint = hints.find(([error]) => stderr.includes(error));
+  return hint === undefined ? "" : `\n${hint[1]}`;
 }
 
 export function interpretRun(run: ProcessRun): ScanResult[] {

@@ -24,7 +24,7 @@ describe("discoverProjects", () => {
 
   it("mixes root and nested projects across workspace folders", () => {
     const projects = discoverProjects([
-      folder("App", ["project.yml"]),
+      folder("App", ["App.xcodeproj"]),
       folder("Repos", [], [["Library", ["Package.swift"]]]),
       folder("Docs", ["index.md"]),
     ]);

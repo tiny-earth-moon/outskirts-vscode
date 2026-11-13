@@ -25,13 +25,11 @@
     "workspaceContains:Package.swift",
     "workspaceContains:*.xcodeproj",
     "workspaceContains:*.xcworkspace",
-    "workspaceContains:project.yml",
     "workspaceContains:.outskirts.yml",
     "workspaceContains:.periphery.yml",
     "workspaceContains:*/Package.swift",
     "workspaceContains:*/*.xcodeproj",
     "workspaceContains:*/*.xcworkspace",
-    "workspaceContains:*/project.yml",
     "workspaceContains:*/.outskirts.yml",
     "workspaceContains:*/.periphery.yml",
     "onView:outskirts.results"
@@ -272,7 +270,7 @@
     "viewsWelcome": [
       {
         "view": "outskirts.results",
-        "contents": "No Swift package or Xcode project in this workspace. Open a folder that holds Package.swift, an Xcode project or workspace, project.yml or .outskirts.yml at its root, or a folder of such projects.\n[Refresh](command:outskirts.refresh)",
+        "contents": "No Swift package or Xcode project in this workspace. Open a folder that holds Package.swift, an Xcode project or workspace, or .outskirts.yml at its root, or a folder of such projects.\n[Refresh](command:outskirts.refresh)",
         "when": "outskirts.state == unavailable"
       },
       {
