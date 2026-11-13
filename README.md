@@ -2,7 +2,7 @@
 
 Shows the unused Swift code found by [outskirts](https://github.com/tiny-earth-moon/outskirts) in a side bar, in the editor and in the Problems panel, for each project of the workspace, and can hand the results to a coding agent.
 
-The extension does not analyze Swift itself: it runs the installed `outskirts` executable with `scan --format json --quiet` in the project directory and shows each result at its location.
+The extension does not analyze Swift itself: it runs the installed `outskirts` executable with `scan --format json --quiet` in the project directory and shows each result at its location. With an outskirts newer than 3.24.0, it also passes `--no-skip-stdout-results`, so that `skip_stdout_results` in the configuration file does not keep the results from it. A scan that prints nothing, not even `[]`, is reported as an error, never as "no unused code".
 
 ## Requirements
 
@@ -66,7 +66,9 @@ The executable is started directly as the process of the terminal, with the prom
 
 ## Several projects
 
-A project is a directory that holds `Package.swift`, an Xcode project or workspace, `project.yml`, `.outskirts.yml` or `.periphery.yml`. Each workspace folder whose root is a project is scanned as one project. Otherwise, each direct sub-directory of the folder that is a project is scanned on its own, so opening a parent folder of several repositories works like opening each of them; deeper directories, hidden ones, `node_modules`, `build`, `DerivedData` and symbolic links are not searched. This works in a single folder as in a multi-root workspace.
+A project is a directory that holds `Package.swift`, an Xcode project or workspace, `.outskirts.yml` or `.periphery.yml`. An XcodeGen `project.yml` alone is not one, since outskirts scans the generated Xcode project: run `xcodegen`, then **outskirts: Refresh Projects**. Each workspace folder whose root is a project is scanned as one project. Otherwise, each direct sub-directory of the folder that is a project is scanned on its own, so opening a parent folder of several repositories works like opening each of them; deeper directories, hidden ones, `node_modules`, `build`, `DerivedData` and symbolic links are not searched. This works in a single folder as in a multi-root workspace.
+
+In a directory without `Package.swift`, the scan names the Xcode workspace with `--project`, or the Xcode project when there is no workspace, unless the Extra arguments hold `--project`, `--config` or `--generic-project-config`, or the configuration file sets `project:` or `generic_project_config:`. With several workspaces, or several projects and no workspace, it does not guess: the scan stops and asks to choose one with `--project` in Extra arguments or `project:` in `.outskirts.yml`. An Xcode project also needs the schemes to build, which the extension does not guess either: set them with `--schemes` in Extra arguments or `schemes:` in `.outskirts.yml`; without them, the error of outskirts is shown with this hint.
 
 Each project keeps its own results: scanning or clearing one leaves the others untouched. With several projects, the side bar lists one node per project with its number of results and the time of its last scan, and buttons to scan or clear that project. **outskirts: Scan** offers each project, preselecting the project of the active editor, plus **All projects**, which scans them one after another; cancelling stops the rest. The status bar shows the total, and its tooltip the count of each project.
 
@@ -77,7 +79,7 @@ Settings are stored per workspace folder, so the projects found in the same fold
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `outskirts.path` | `outskirts` | Path of the executable, or its name on the PATH. |
-| `outskirts.arguments` | `[]` | Extra arguments for `outskirts scan`, e.g. `["--schemes", "App"]`. |
+| `outskirts.arguments` | `[]` | Extra arguments for `outskirts scan`, e.g. `["--schemes", "App"]`, after the ones the extension passes (`--project`: see [Several projects](#several-projects)). |
 | `outskirts.skipBuild` | `false` | Reuse the existing index instead of building the project (`--skip-build`). |
 | `outskirts.severity` | `warning` | `error`, `warning`, `information` or `hint`. |
 | `outskirts.agent` | empty | Agent started by Fix with Agent: `claude`, `copilot`, `codex`, `gemini`, `cursor`, or `custom`; empty asks. |

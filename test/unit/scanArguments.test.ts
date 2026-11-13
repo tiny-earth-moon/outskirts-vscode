@@ -8,7 +8,22 @@ describe("buildScanArguments", () => {
   });
 
   it("asks to reuse the index before the extra arguments when skipBuild is set", () => {
-    assert.deepEqual(buildScanArguments(["--schemes", "App"], true), ["scan", "--format", "json", "--quiet", "--skip-build", "--schemes", "App"]);
+    assert.deepEqual(buildScanArguments(["--schemes", "App"], { skipBuild: true }), ["scan", "--format", "json", "--quiet", "--skip-build", "--schemes", "App"]);
+  });
+
+  it("names the Xcode project before the extra arguments", () => {
+    assert.deepEqual(buildScanArguments(["--schemes", "App"], { skipBuild: true, project: ["--project", "App.xcworkspace"] }), [
+      "scan", "--format", "json", "--quiet", "--skip-build", "--project", "App.xcworkspace", "--schemes", "App",
+    ]);
+  });
+});
+
+describe("buildScanArguments with an outskirts that can be told to print the results", () => {
+  it("asks for the results on stdout before the extra arguments, which keep the last word", () => {
+    assert.deepEqual(buildScanArguments(["--schemes", "App", "--", "-quiet"], { printResults: true }), [
+      "scan", "--format", "json", "--quiet", "--no-skip-stdout-results", "--schemes", "App", "--", "-quiet",
+    ]);
+    assert.equal(buildScanArguments([]).includes("--no-skip-stdout-results"), false);
   });
 });
 

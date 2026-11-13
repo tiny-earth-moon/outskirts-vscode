@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- **Xcode projects**: a folder that holds only an Xcode workspace or project is scanned with `--project`, the workspace first; with several, the scan asks to choose one. A missing `--project` or `--schemes` is shown with the error of outskirts and the setting that fixes it. An XcodeGen `project.yml` alone is no longer listed as a project.
+- **Results sent elsewhere**: a scan that prints nothing on stdout, as with `--skip-stdout-results`, is an error that says why, instead of "No unused code found". With an outskirts newer than 3.24.0, the scan passes `--no-skip-stdout-results` so that `skip_stdout_results` in the configuration file does not hide the results.
+- **All projects**: the scan stays running from one project to the next, so the Cancel button and the status bar no longer flicker between them; an outskirts stopped by a signal is reported as "stopped by signal SIGKILL", not "exited with status null".
+
 ## 0.1.0 (2026-11-13)
 
 First release.

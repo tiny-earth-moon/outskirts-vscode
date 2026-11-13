@@ -2,8 +2,8 @@ import * as assert from "node:assert/strict";
 import { isScannableRoot } from "../../src/scannable";
 
 describe("isScannableRoot", () => {
-  it("accepts a package, a project, a workspace, a project spec or a configuration", () => {
-    for (const name of ["Package.swift", "App.xcodeproj", "App.xcworkspace", "project.yml", ".outskirts.yml", ".periphery.yml"]) {
+  it("accepts a package, a project, a workspace or a configuration", () => {
+    for (const name of ["Package.swift", "App.xcodeproj", "App.xcworkspace", ".outskirts.yml", ".periphery.yml"]) {
       assert.equal(isScannableRoot(["README.md", name]), true, name);
     }
   });
@@ -11,5 +11,9 @@ describe("isScannableRoot", () => {
   it("rejects other folders", () => {
     assert.equal(isScannableRoot([]), false);
     assert.equal(isScannableRoot(["README.md", "Sources", "package.json", "project.yaml"]), false);
+  });
+
+  it("rejects an XcodeGen spec whose project is not generated, which outskirts cannot scan", () => {
+    assert.equal(isScannableRoot(["project.yml", "Sources"]), false);
   });
 });

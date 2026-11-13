@@ -36,13 +36,13 @@ export function runProcess(executable: string, args: string[], options: RunOptio
         reject(error);
       }
     });
-    child.on("close", (exitCode) => {
+    child.on("close", (exitCode, signal) => {
       if (options.signal.aborted) {
         reject(new CancelledError("The scan was cancelled."));
         return;
       }
       options.onOutput(stdout);
-      resolve({ exitCode, stdout, stderr });
+      resolve({ exitCode, signal, stdout, stderr });
     });
   });
 }

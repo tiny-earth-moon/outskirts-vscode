@@ -1,5 +1,6 @@
 import * as assert from "node:assert/strict";
 import { interpretRun, ScanFailedError } from "../../src/outcome";
+import { runProcess } from "../../src/runProcess";
 import { InvalidOutputError } from "../../src/results";
 
 const result = '[{"kind":"class","name":"A","hints":["unused"],"location":"a.swift:1:1"}]';
@@ -22,6 +23,36 @@ describe("interpretRun", () => {
 
   it("fails on a usage error", () => {
     assert.throws(() => interpretRun({ exitCode: 64, stdout: "", stderr: "Usage" }), ScanFailedError);
+  });
+
+  it("shows the error of outskirts as is with the setting that fixes it when an Xcode project has no schemes", () => {
+    assert.throws(
+      () => interpretRun({ exitCode: 1, stdout: "", stderr: "Error: The '--schemes' option is required.\n" }),
+      (error: unknown) =>
+        error instanceof ScanFailedError &&
+        error.message.includes("Error: The '--schemes' option is required.") &&
+        error.message.includes('"--schemes <scheme>" in Extra arguments, or "schemes:" in .outskirts.yml'),
+    );
+  });
+
+  it("tells how to name the Xcode project when outskirts cannot identify it", () => {
+    const stderr = "Error: Failed to identify project in the current directory. For Xcode projects use the '--project' option.\n";
+    assert.throws(
+      () => interpretRun({ exitCode: 1, stdout: "", stderr }),
+      (error: unknown) => error instanceof ScanFailedError && error.message.includes('"--project <name>" in Extra arguments'),
+    );
+  });
+
+  it("does not announce zero results when a successful scan prints nothing", () => {
+    assert.throws(() => interpretRun({ exitCode: 0, stdout: "", stderr: "" }), InvalidOutputError);
+  });
+
+  it("names the signal that stopped outskirts instead of a null status", async () => {
+    const run = await runProcess("/bin/sh", ["-c", "kill -KILL $$"], { cwd: "/", signal: new AbortController().signal, onOutput: () => undefined });
+    assert.throws(
+      () => interpretRun(run),
+      (error: unknown) => error instanceof ScanFailedError && error.message === "outskirts was stopped by signal SIGKILL.",
+    );
   });
 
   it("reports invalid JSON on success explicitly", () => {

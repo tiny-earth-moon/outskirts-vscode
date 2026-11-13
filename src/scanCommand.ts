@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { severityFromSetting } from "./diagnostics";
 import { toFindings } from "./findings";
-import { interpretRun } from "./outcome";
+import { exitDescription, interpretRun } from "./outcome";
 import { ResultsStore } from "./resultsStore";
 import { CancelledError, ExecutableNotFoundError, runProcess } from "./runProcess";
 import { buildScanArguments } from "./scanArguments";
@@ -9,13 +9,19 @@ import { resolveExecutable } from "./executable";
 import { Project } from "./project";
 import { scanSummary, sequenceSummary } from "./summary";
 import { installHint } from "./optionsModel";
+import { projectArguments, readProjectFolder } from "./xcodeProject";
+import { ScanState } from "./scanState";
+import { probeVersion } from "./versionProbe";
+import { printsResultsWhenAsked } from "./version";
 
 export class Scanner {
   private controller: AbortController | undefined;
   private cancelled = false;
   private readonly runningChanged = new vscode.EventEmitter<boolean>();
   readonly onDidChangeRunning = this.runningChanged.event;
-  private scanningKey: string | undefined;
+  private readonly state = new ScanState((running) => {
+    this.runningChanged.fire(running);
+  });
 
   constructor(
     private readonly store: ResultsStore,
@@ -23,11 +29,11 @@ export class Scanner {
   ) {}
 
   get running(): boolean {
-    return this.controller !== undefined;
+    return this.state.running;
   }
 
   get scanning(): string | undefined {
-    return this.scanningKey;
+    return this.state.scanning;
   }
 
   cancel(): void {
@@ -46,26 +52,27 @@ export class Scanner {
     }
     this.cancelled = false;
     const counts: number[] = [];
-    for (const project of projects) {
-      if (this.cancelled) {
-        break;
-      }
-      const controller = new AbortController();
-      this.setController(controller, project.key);
-      try {
-        counts.push(await this.run(project, controller));
-        if (projects.length === 1) {
-          void announce(scanSummary(counts[0], project.name), counts[0]);
+    await this.state.sequence(
+      projects,
+      async (project) => {
+        const controller = new AbortController();
+        this.controller = controller;
+        try {
+          counts.push(await this.run(project, controller));
+          if (projects.length === 1) {
+            void announce(scanSummary(counts[0], project.name), counts[0]);
+          }
+        } catch (error) {
+          if (error instanceof CancelledError) {
+            this.cancelled = true;
+          }
+          void report(error, this.output);
+        } finally {
+          this.controller = undefined;
         }
-      } catch (error) {
-        if (error instanceof CancelledError) {
-          this.cancelled = true;
-        }
-        void report(error, this.output);
-      } finally {
-        this.setController(undefined, undefined);
-      }
-    }
+      },
+      () => this.cancelled,
+    );
     if (projects.length > 1 && counts.length > 0) {
       const total = counts.reduce((sum, count) => sum + count, 0);
       void announce(sequenceSummary(counts), total);
@@ -80,8 +87,14 @@ export class Scanner {
   private async run(project: Project, controller: AbortController): Promise<number> {
     const config = vscode.workspace.getConfiguration("outskirts", project.workspaceFolder.uri);
     const executable = resolveExecutable(config.inspect<string>("path"));
-    const args = buildScanArguments(config.get<string[]>("arguments", []), config.get<boolean>("skipBuild", false));
     const cwd = project.uri.fsPath;
+    const extra = config.get<string[]>("arguments", []);
+    const version = await probeVersion(executable);
+    const args = buildScanArguments(extra, {
+      skipBuild: config.get<boolean>("skipBuild", false),
+      project: projectArguments(await readProjectFolder(cwd), extra),
+      printResults: version.state === "found" && printsResultsWhenAsked(version.version),
+    });
     const severity = config.get<string>("severity", "warning");
     severityFromSetting(severity);
     const title = `Scanning ${project.name}`;
@@ -97,16 +110,10 @@ export class Scanner {
         } });
       },
     );
-    this.output.appendLine(`outskirts exited with status ${String(run.exitCode)}.`);
+    this.output.appendLine(exitDescription(run));
     const findings = toFindings(interpretRun(run), cwd);
     this.store.set(project.key, findings, severity, Date.now());
     return findings.length;
-  }
-
-  private setController(controller: AbortController | undefined, key: string | undefined): void {
-    this.controller = controller;
-    this.scanningKey = key;
-    this.runningChanged.fire(controller !== undefined);
   }
 }
 
