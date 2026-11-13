@@ -1,5 +1,6 @@
 import * as assert from "node:assert/strict";
 import { interpretRun, ScanFailedError } from "../../src/outcome";
+import { runProcess } from "../../src/runProcess";
 import { InvalidOutputError } from "../../src/results";
 
 const result = '[{"kind":"class","name":"A","hints":["unused"],"location":"a.swift:1:1"}]';
@@ -44,6 +45,14 @@ describe("interpretRun", () => {
 
   it("does not announce zero results when a successful scan prints nothing", () => {
     assert.throws(() => interpretRun({ exitCode: 0, stdout: "", stderr: "" }), InvalidOutputError);
+  });
+
+  it("names the signal that stopped outskirts instead of a null status", async () => {
+    const run = await runProcess("/bin/sh", ["-c", "kill -KILL $$"], { cwd: "/", signal: new AbortController().signal, onOutput: () => undefined });
+    assert.throws(
+      () => interpretRun(run),
+      (error: unknown) => error instanceof ScanFailedError && error.message === "outskirts was stopped by signal SIGKILL.",
+    );
   });
 
   it("reports invalid JSON on success explicitly", () => {

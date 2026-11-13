@@ -2,14 +2,21 @@ import { InvalidOutputError, parseResults, ScanResult } from "./results";
 
 export interface ProcessRun {
   exitCode: number | null;
+  signal?: string | null;
   stdout: string;
   stderr: string;
 }
 
 export class ScanFailedError extends Error {
-  constructor(readonly exitCode: number | null, readonly stderrTail: string) {
-    super(`outskirts exited with status ${String(exitCode)}.${stderrTail === "" ? "" : `\n${stderrTail}`}${hintFor(stderrTail)}`);
+  constructor(readonly run: ProcessRun, readonly stderrTail: string) {
+    super(`${exitDescription(run)}${stderrTail === "" ? "" : `\n${stderrTail}`}${hintFor(stderrTail)}`);
   }
+}
+
+export function exitDescription(run: Pick<ProcessRun, "exitCode" | "signal">): string {
+  return run.exitCode === null && typeof run.signal === "string"
+    ? `outskirts was stopped by signal ${run.signal}.`
+    : `outskirts exited with status ${String(run.exitCode)}.`;
 }
 
 const hints: readonly [string, string][] = [
@@ -35,7 +42,7 @@ export function interpretRun(run: ProcessRun): ScanResult[] {
       }
     }
   }
-  throw new ScanFailedError(run.exitCode, lastLines(run.stderr, 5));
+  throw new ScanFailedError(run, lastLines(run.stderr, 5));
 }
 
 export function lastLines(text: string, count: number): string {
