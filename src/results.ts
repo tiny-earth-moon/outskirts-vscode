@@ -1,0 +1,46 @@
+export interface ScanResult {
+  kind: string;
+  name: string;
+  hints: string[];
+  location: string;
+  accessibility?: string;
+  modifiers?: string[];
+  attributes?: string[];
+  ids?: string[];
+  modules?: string[];
+}
+
+export class InvalidOutputError extends Error {}
+
+export function parseResults(stdout: string): ScanResult[] {
+  if (stdout.trim() === "") {
+    return [];
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(stdout);
+  } catch (error) {
+    throw new InvalidOutputError(`outskirts printed invalid JSON: ${String(error)}`);
+  }
+  if (!Array.isArray(parsed)) {
+    throw new InvalidOutputError("outskirts printed JSON that is not an array of results.");
+  }
+  return parsed.map((item, index) => validate(item, index));
+}
+
+function validate(item: unknown, index: number): ScanResult {
+  if (typeof item !== "object" || item === null) {
+    throw new InvalidOutputError(`Result ${String(index)} is not an object.`);
+  }
+  const record = item as Record<string, unknown>;
+  for (const key of ["kind", "name", "location"]) {
+    if (typeof record[key] !== "string") {
+      throw new InvalidOutputError(`Result ${String(index)} has no string '${key}'.`);
+    }
+  }
+  const hints = record.hints;
+  if (!Array.isArray(hints) || !hints.every((hint) => typeof hint === "string")) {
+    throw new InvalidOutputError(`Result ${String(index)} has no string array 'hints'.`);
+  }
+  return item as ScanResult;
+}

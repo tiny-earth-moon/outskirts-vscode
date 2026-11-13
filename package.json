@@ -27,6 +27,16 @@
     "workspaceContains:.outskirts.yml",
     "workspaceContains:.periphery.yml"
   ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "A scan builds the project, so it only runs in a trusted workspace.",
+      "restrictedConfigurations": [
+        "outskirts.path",
+        "outskirts.arguments"
+      ]
+    }
+  },
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
@@ -47,7 +57,7 @@
         "outskirts.path": {
           "type": "string",
           "default": "outskirts",
-          "scope": "machine-overridable",
+          "scope": "machine",
           "description": "Path of the outskirts executable, or its name when it is on the PATH."
         },
         "outskirts.arguments": {
@@ -81,7 +91,7 @@
     "lint": "eslint .",
     "typecheck": "tsc -p . --noEmit",
     "test": "npm run test:unit && npm run test:integration",
-    "test:unit": "npm run compile && mocha out/test/unit",
+    "test:unit": "npm run compile && mocha",
     "test:integration": "npm run compile && npm run bundle && node out/test/integration/runTest.js",
     "package": "vsce package"
   },
