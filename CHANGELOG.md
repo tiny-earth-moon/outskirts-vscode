@@ -6,6 +6,7 @@
 - **Results sent elsewhere**: a scan that prints nothing on stdout, as with `--skip-stdout-results`, is an error that says why, instead of "No unused code found". With an outskirts newer than 3.24.0, the scan passes `--no-skip-stdout-results` so that `skip_stdout_results` in the configuration file does not hide the results.
 - **All projects**: the scan stays running from one project to the next, so the Cancel button and the status bar no longer flicker between them; an outskirts stopped by a signal is reported as "stopped by signal SIGKILL", not "exited with status null".
 - **Fix with Agent**: names and paths in the prompt have their invisible characters (controls, line and paragraph separators, tag characters, bidirectional controls, zero-width characters) replaced with a visible "�", so that a name can no longer hide text or a line break from the reader of the prompt; ordinary names, emoji included, are unchanged.
+- **Fix with Agent on Windows**: the prompt is shortened, with the number of results left out, so that the command line of the agent stays under the 32 767 characters that Windows accepts, instead of failing to start; the other platforms keep their 100 000-byte limit.
 
 ## 0.1.0 (2026-11-13)
 

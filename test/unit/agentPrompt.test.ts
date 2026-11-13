@@ -1,5 +1,5 @@
 import * as assert from "node:assert/strict";
-import { buildPrompt, fitPrompt, maxPromptResults, sanitize } from "../../src/agentPrompt";
+import { buildPrompt, commandLineLength, fitPrompt, maxPromptBytes, maxPromptResults, maxWindowsCommandLine, sanitize, windowsArgumentLength } from "../../src/agentPrompt";
 import { Finding } from "../../src/findings";
 
 function finding(file: string, line: number, name: string, code: string | undefined = "unused", kind = "function"): Finding {
@@ -109,5 +109,29 @@ describe("fitPrompt", () => {
     const prompt = fitPrompt({ projectName: "App", root, findings: [finding("/work/App/A.swift", 0, "y".repeat(5000))] }, 1000);
     assert.match(prompt, /^Remove the unused Swift code/);
     assert.match(prompt, /1 more result was left out/);
+  });
+
+  it("keeps the Windows command line under its limit, executable and other arguments included", () => {
+    const many = Array.from({ length: maxPromptResults }, (_, index) => finding(`/work/App/Sources/Module${String(index)}/File.swift`, index, `"quoted\\name${String(index)}"()` + "x".repeat(300)));
+    const executable = "C:\\Users\\me\\AppData\\Roaming\\npm\\claude.cmd";
+    const argsFor = (prompt: string): string[] => ["-i", prompt, "--flag"];
+    const windows = commandLineLength("win32", executable, argsFor);
+    assert.ok(windows !== undefined);
+    const prompt = fitPrompt({ projectName: "App", root, findings: many }, maxPromptBytes, maxPromptResults, windows);
+    assert.ok(windows(prompt) <= maxWindowsCommandLine);
+    assert.ok(windows(prompt) > maxWindowsCommandLine / 2);
+    assert.match(prompt, /\d+ more results were left out/);
+    assert.equal(commandLineLength("darwin", executable, argsFor), undefined);
+    assert.equal(commandLineLength("linux", executable, argsFor), undefined);
+    const other = fitPrompt({ projectName: "App", root, findings: many }, maxPromptBytes, maxPromptResults, commandLineLength("darwin", executable, argsFor));
+    assert.ok(Buffer.byteLength(other) > maxWindowsCommandLine);
+    assert.equal(other, fitPrompt({ projectName: "App", root, findings: many }));
+  });
+
+  it("counts the quoting of Windows arguments", () => {
+    assert.equal(windowsArgumentLength("plain"), 5);
+    assert.equal(windowsArgumentLength(""), 2);
+    assert.equal(windowsArgumentLength("a b"), 5);
+    assert.equal(windowsArgumentLength('say "hi" \\ now'), 19);
   });
 });

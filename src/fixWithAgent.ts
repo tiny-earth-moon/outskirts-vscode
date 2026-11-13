@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { pickAgent } from "./agentPick";
-import { fitPrompt } from "./agentPrompt";
+import { commandLineLength, fitPrompt, maxPromptBytes, maxPromptResults } from "./agentPrompt";
 import { AgentRegistry } from "./agentRegistry";
 import { FixScope, nodeScope, projectsWithResults } from "./agentScope";
 import { launchRequest } from "./agents";
@@ -54,7 +54,10 @@ export function registerFixWithAgent(store: ResultsStore, projects: ProjectList,
       }
     }
     const root = project.uri.fsPath;
-    const prompt = fitPrompt({ projectName: project.name, root, findings, verify: agentVerify() });
+    const agent = status.agent;
+    const executable = status.executable;
+    const lineLength = commandLineLength(process.platform, executable, (text) => launchRequest(agent, executable, text, root).args);
+    const prompt = fitPrompt({ projectName: project.name, root, findings, verify: agentVerify() }, maxPromptBytes, maxPromptResults, lineLength);
     launchInTerminal(launchRequest(status.agent, status.executable, prompt, root));
   };
   return [
