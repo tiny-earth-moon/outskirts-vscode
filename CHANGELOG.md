@@ -11,6 +11,11 @@
 - **Output channel**: shows the messages of outskirts and the size of the results, no longer the whole JSON of the results.
 - **outskirts.path**: a leading `~` stands for the home folder. The version check runs in the project folder, and an outskirts that does not answer in time shows "no answer to version" instead of "not found".
 - **Executable lookup**: a name in `outskirts.path` is looked up on the PATH before the scan, never in the project folder (Windows searched it first), and only absolute PATH entries count. A relative path is no longer accepted: give an absolute path or a name.
+- **Overlapping workspace folders**: a project reached both as a workspace folder and as a sub-directory of its parent folder is listed and scanned once, as its own workspace folder, instead of twice under the same name.
+- **Removed projects**: a scan whose project leaves the list while it runs, its folder removed from the workspace or deleted, is stopped and its results dropped, instead of being counted in the status bar and the Problems panel for a project the side bar no longer shows.
+- **Project list**: an Xcode project or workspace added or removed, at the root of a workspace folder or one level below, and a sub-directory added or deleted as a whole, now update the list of projects, as `Package.swift` and the configuration files already did.
+- **Activation**: the extension starts with a workspace that holds an Xcode project or workspace by looking for the file inside it (`project.pbxproj`, `contents.xcworkspacedata`), since `workspaceContains` matches its glob patterns against files only and an Xcode project or workspace is a folder.
+- **Dependency directories**: `Pods`, `Carthage`, `vendor`, `Vendor` and `SourcePackages` are no longer offered as projects, like `node_modules`, `build` and `DerivedData` already.
 
 ## 0.1.0 (2026-11-13)
 

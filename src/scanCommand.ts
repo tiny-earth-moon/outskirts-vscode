@@ -17,6 +17,7 @@ import { printsResultsWhenAsked } from "./version";
 export class Scanner {
   private controller: AbortController | undefined;
   private cancelled = false;
+  private removed: string | undefined;
   private readonly runningChanged = new vscode.EventEmitter<boolean>();
   readonly onDidChangeRunning = this.runningChanged.event;
   private readonly state = new ScanState((running) => {
@@ -41,6 +42,14 @@ export class Scanner {
     this.controller?.abort();
   }
 
+  cancelRemoved(exists: (key: string) => boolean): void {
+    const key = this.state.scanning;
+    if (key !== undefined && !exists(key)) {
+      this.removed = key;
+      this.controller?.abort();
+    }
+  }
+
   async scan(projects: readonly Project[]): Promise<void> {
     if (this.running) {
       void vscode.window.showWarningMessage("A scan is already running.");
@@ -63,12 +72,13 @@ export class Scanner {
             void announce(scanSummary(counts[0], project.name), counts[0]);
           }
         } catch (error) {
-          if (error instanceof CancelledError) {
+          if (error instanceof CancelledError && this.removed !== project.key) {
             this.cancelled = true;
           }
           void report(error, this.output);
         } finally {
           this.controller = undefined;
+          this.removed = undefined;
         }
       },
       () => this.cancelled,

@@ -2,9 +2,8 @@ import * as vscode from "vscode";
 import { FolderInfo } from "./folderModel";
 import { Project, projectInfo } from "./project";
 import { findProjects } from "./projectDiscovery";
-import { projectForUri } from "./projects";
+import { projectForUri, projectWatchPatterns } from "./projects";
 
-const markers = "{Package.swift,.outskirts.yml,.periphery.yml}";
 const debounce = 300;
 
 export class ProjectList {
@@ -60,7 +59,7 @@ export class ProjectList {
   private watch(): void {
     this.disposeWatchers();
     for (const folder of vscode.workspace.workspaceFolders ?? []) {
-      for (const pattern of [markers, `*/${markers}`]) {
+      for (const pattern of projectWatchPatterns) {
         const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(folder, pattern), false, true, false);
         this.watchers.push(watcher, watcher.onDidCreate(() => { this.schedule(); }), watcher.onDidDelete(() => { this.schedule(); }));
       }

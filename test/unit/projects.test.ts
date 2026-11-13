@@ -1,5 +1,5 @@
 import * as assert from "node:assert/strict";
-import { discoverProjects, FolderListing, isCandidateDirectory, projectForUri } from "../../src/projects";
+import { discoverProjects, FolderListing, isCandidateDirectory, projectForUri, projectWatchPatterns } from "../../src/projects";
 
 function folder(name: string, entries: string[], children: [string, string[]][] = []): FolderListing {
   const key = `file:///${name.toLowerCase()}`;
@@ -39,12 +39,32 @@ describe("discoverProjects", () => {
     assert.deepEqual(projects.map((project) => project.name), ["App (Work)", "App (Home)"]);
   });
 
+  it("lists a project reached from two overlapping workspace folders once, as its own workspace folder", () => {
+    const parent: FolderListing = {
+      key: "file:///r",
+      name: "r",
+      entries: ["README.md"],
+      children: [{ key: "file:///r/app", name: "app", entries: ["Package.swift"] }],
+    };
+    const child: FolderListing = { key: "file:///r/app", name: "app", entries: ["Package.swift"], children: [] };
+    for (const folders of [[parent, child], [child, parent]]) {
+      const projects = discoverProjects(folders);
+      assert.deepEqual(projects, [{ key: "file:///r/app", name: "app", folderKey: "file:///r/app", folderName: "app", nested: false }]);
+    }
+  });
+
   it("finds nothing in a folder without projects", () => {
     assert.deepEqual(discoverProjects([folder("Notes", ["notes.txt"], [["Drafts", ["a.md"]]])]), []);
   });
 });
 
 describe("isCandidateDirectory", () => {
+  it("skips the dependency directories, which hold the projects of others", () => {
+    for (const name of ["Pods", "Carthage", "vendor", "Vendor", "SourcePackages"]) {
+      assert.equal(isCandidateDirectory(name, true, false), false, name);
+    }
+  });
+
   it("keeps plain directories", () => {
     assert.equal(isCandidateDirectory("App", true, false), true);
   });
@@ -70,5 +90,33 @@ describe("projectForUri", () => {
   it("finds no project outside every project", () => {
     assert.equal(projectForUri(keys, "file:///other/a.swift"), undefined);
     assert.equal(projectForUri(["file:///repos/App"], "file:///repos/Apple/a.swift"), undefined);
+  });
+});
+
+describe("projectWatchPatterns", () => {
+  const glob = (pattern: string): RegExp =>
+    new RegExp(
+      `^${pattern
+        .replace(/[.+^$()|[\]\\]/g, "\\$&")
+        .replace(/\*/g, "[^/]*")
+        .replace(/\{([^}]*)\}/g, (_match, list: string) => `(${list.split(",").join("|")})`)}$`,
+    );
+  const watched = (path: string): boolean => projectWatchPatterns.some((pattern) => glob(pattern).test(path));
+
+  it("follows the project files of a folder and of its sub-directories, Xcode bundles included", () => {
+    for (const name of ["Package.swift", ".outskirts.yml", ".periphery.yml", "App.xcodeproj", "App.xcworkspace"]) {
+      assert.equal(watched(name), true, name);
+      assert.equal(watched(`App/${name}`), true, `App/${name}`);
+    }
+  });
+
+  it("follows a sub-directory added or deleted as a whole", () => {
+    assert.equal(watched("App"), true);
+  });
+
+  it("ignores the files deeper in a project", () => {
+    assert.equal(watched("App/Sources/main.swift"), false);
+    assert.equal(watched("App/App.xcodeproj/project.pbxproj"), false);
+    assert.equal(watched("App/Lib/Package.swift"), false);
   });
 });

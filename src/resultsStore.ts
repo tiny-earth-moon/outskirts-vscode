@@ -19,6 +19,7 @@ export function resultsState(entry: FolderResults | undefined): ResultsState {
 export class ResultsStore {
   private readonly entries = new Map<string, FolderResults>();
   private readonly listeners = new Set<() => void>();
+  private known: ReadonlySet<string> | undefined;
 
   get(folder: string): FolderResults | undefined {
     return this.entries.get(folder);
@@ -36,9 +37,13 @@ export class ResultsStore {
     return count;
   }
 
-  set(folder: string, findings: readonly Finding[], severity: string, scannedAt: number): void {
+  set(folder: string, findings: readonly Finding[], severity: string, scannedAt: number): boolean {
+    if (this.known !== undefined && !this.known.has(folder)) {
+      return false;
+    }
     this.entries.set(folder, { findings, severity, scannedAt, stale: new Set() });
     this.notify();
+    return true;
   }
 
   markStale(folder: string, file: string): boolean {
@@ -66,6 +71,7 @@ export class ResultsStore {
 
   retain(folders: readonly string[]): void {
     const kept = new Set(folders);
+    this.known = kept;
     const removed = [...this.entries.keys()].filter((folder) => !kept.has(folder));
     for (const folder of removed) {
       this.entries.delete(folder);

@@ -23,13 +23,13 @@
   ],
   "activationEvents": [
     "workspaceContains:Package.swift",
-    "workspaceContains:*.xcodeproj",
-    "workspaceContains:*.xcworkspace",
+    "workspaceContains:*.xcodeproj/project.pbxproj",
+    "workspaceContains:*.xcworkspace/contents.xcworkspacedata",
     "workspaceContains:.outskirts.yml",
     "workspaceContains:.periphery.yml",
     "workspaceContains:*/Package.swift",
-    "workspaceContains:*/*.xcodeproj",
-    "workspaceContains:*/*.xcworkspace",
+    "workspaceContains:*/*.xcodeproj/project.pbxproj",
+    "workspaceContains:*/*.xcworkspace/contents.xcworkspacedata",
     "workspaceContains:*/.outskirts.yml",
     "workspaceContains:*/.periphery.yml",
     "onView:outskirts.results"

@@ -38,6 +38,22 @@ describe("ResultsStore", () => {
     assert.equal(changes, 3);
   });
 
+  it("drops the results of a scan that ends after its project was removed", () => {
+    const store = new ResultsStore();
+    let changes = 0;
+    store.onDidChange(() => changes++);
+    store.retain(["a", "b"]);
+    store.retain(["b"]);
+    assert.equal(store.set("a", [finding], "warning", 1), false);
+    assert.equal(store.get("a"), undefined);
+    assert.equal(store.total, 0);
+    assert.equal(changes, 0);
+    assert.equal(store.set("b", [finding], "warning", 1), true);
+    store.retain(["a", "b"]);
+    assert.equal(store.set("a", [finding], "warning", 2), true);
+    assert.equal(store.total, 2);
+  });
+
   it("derives the state of a folder", () => {
     assert.equal(resultsState(undefined), "none");
     assert.equal(resultsState({ findings: [], severity: "warning", scannedAt: 0, stale: new Set<string>() }), "empty");
