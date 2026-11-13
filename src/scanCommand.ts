@@ -89,7 +89,7 @@ export class Scanner {
     const executable = resolveExecutable(config.inspect<string>("path"));
     const cwd = project.uri.fsPath;
     const extra = config.get<string[]>("arguments", []);
-    const version = await probeVersion(executable);
+    const version = await probeVersion(executable, cwd);
     const args = buildScanArguments(extra, {
       skipBuild: config.get<boolean>("skipBuild", false),
       project: projectArguments(await readProjectFolder(cwd), extra),

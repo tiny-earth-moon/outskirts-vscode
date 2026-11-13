@@ -4,7 +4,7 @@ import { GroupBy } from "./treeModel";
 
 export const installHint = "Install it with `brew install tiny-earth-moon/tap/outskirts` or set `outskirts.path`.";
 
-export type ExecutableVersion = { state: "checking" } | { state: "found"; version: string } | { state: "missing" };
+export type ExecutableVersion = { state: "checking" } | { state: "found"; version: string } | { state: "missing" } | { state: "unanswered" };
 
 export interface OptionsSnapshot {
   skipBuild: boolean;
@@ -36,6 +36,8 @@ export function executableDescription(executable: string, version: ExecutableVer
       return `${executable} ${version.version}`;
     case "missing":
       return `${executable} · not found`;
+    case "unanswered":
+      return `${executable} · no answer to version`;
   }
 }
 
