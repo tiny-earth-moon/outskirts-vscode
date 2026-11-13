@@ -1,5 +1,5 @@
 import * as assert from "node:assert/strict";
-import { parseVersion, printsResultsWhenAsked } from "../../src/version";
+import { parseVersion, printsAbsolutePathsWhenAsked, printsResultsWhenAsked } from "../../src/version";
 
 describe("parseVersion", () => {
   it("reads a bare version", () => {
@@ -26,6 +26,17 @@ describe("printsResultsWhenAsked", () => {
   it("is true after 3.24.0", () => {
     for (const version of ["3.24.1", "3.25.0-beta.1", "3.30", "4.0.0"]) {
       assert.equal(printsResultsWhenAsked(version), true, version);
+    }
+  });
+});
+
+describe("printsAbsolutePathsWhenAsked", () => {
+  it("is true from 3.13.3, the first to accept --no-relative-results", () => {
+    for (const version of ["3.13.3", "3.14.0", "3.24.0", "4.0.0"]) {
+      assert.equal(printsAbsolutePathsWhenAsked(version), true, version);
+    }
+    for (const version of ["3.13.2", "3.9", "2.99.99", "nope"]) {
+      assert.equal(printsAbsolutePathsWhenAsked(version), false, version);
     }
   });
 });

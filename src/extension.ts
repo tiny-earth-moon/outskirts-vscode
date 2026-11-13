@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { AgentRegistry } from "./agentRegistry";
-import { bindDiagnostics } from "./diagnostics";
+import { bindDiagnostics, followSeverity } from "./diagnostics";
 import { FolderNode, viewState } from "./folderModel";
 import { registerFixWithAgent } from "./fixWithAgent";
 import { isFolderNode } from "./folderTree";
@@ -80,7 +80,8 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
     projects,
     statusBar,
     bindDiagnostics(collection, store),
-    watchStaleFiles(store),
+    followSeverity(store, () => projects.projects),
+    watchStaleFiles(store, (key) => projects.find(key)?.uri.fsPath),
     store.onDidChange(updateState),
     projects.onDidChange(() => {
       store.retain(projects.infos.map((folder) => folder.key));

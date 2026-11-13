@@ -1,4 +1,4 @@
-import { parseLocation, SourcePosition } from "./location";
+import { FolderAlias, parseLocation, SourcePosition } from "./location";
 import { ScanResult } from "./results";
 
 export interface Finding extends SourcePosition {
@@ -8,9 +8,9 @@ export interface Finding extends SourcePosition {
   code?: string;
 }
 
-export function toFindings(results: ScanResult[], folder: string): Finding[] {
+export function toFindings(results: ScanResult[], folder: string, aliases: readonly FolderAlias[] = []): Finding[] {
   return results.flatMap((result) => {
-    const position = parseLocation(result.location, folder);
+    const position = parseLocation(result.location, folder, aliases);
     if (result.hints.length === 0) {
       return [{ ...position, kind: kindName(result.kind), name: result.name, message: `${kindName(result.kind)} '${result.name}'` }];
     }

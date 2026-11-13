@@ -28,6 +28,17 @@ export function relativeTime(elapsed: number): string {
   return hours < 24 ? `${String(hours)} h ago` : `${String(Math.floor(hours / 24))} d ago`;
 }
 
+export function nextTimeChange(elapsed: number): number {
+  const minute = 60000;
+  const unit = elapsed < 60 * minute ? minute : elapsed < 24 * 60 * minute ? 60 * minute : 24 * 60 * minute;
+  return unit - (Math.max(elapsed, 0) % unit);
+}
+
+export function nextDescriptionChange(results: ReadonlyMap<string, FolderResults>, now: number): number | undefined {
+  const delays = [...results.values()].filter((entry) => entry.findings.length > 0).map((entry) => nextTimeChange(now - entry.scannedAt));
+  return delays.length === 0 ? undefined : Math.min(...delays);
+}
+
 export function folderDescription(entry: FolderResults | undefined, scanning: boolean, now: number): string {
   if (scanning) {
     return "scanning…";

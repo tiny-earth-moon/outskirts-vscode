@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { FolderInfo } from "./folderModel";
+import { FolderInfo, nextDescriptionChange } from "./folderModel";
 import { isFolderNode, isResultGroup, treeChildren, TreeNode } from "./folderTree";
 import { ResultsStore } from "./resultsStore";
 import { isStaleFinding, staleHint } from "./staleModel";
@@ -11,6 +11,7 @@ export class ResultsTreeProvider implements vscode.TreeDataProvider<ResultNode> 
   private readonly changed = new vscode.EventEmitter<undefined>();
   readonly onDidChangeTreeData = this.changed.event;
   private mode: GroupBy = "file";
+  private timer: NodeJS.Timeout | undefined;
 
   constructor(
     private readonly store: ResultsStore,
@@ -30,6 +31,11 @@ export class ResultsTreeProvider implements vscode.TreeDataProvider<ResultNode> 
 
   refresh(): void {
     this.changed.fire(undefined);
+    clearTimeout(this.timer);
+    const delay = nextDescriptionChange(this.store.all(), this.now());
+    this.timer = delay === undefined ? undefined : setTimeout(() => {
+      this.refresh();
+    }, delay + 1000);
   }
 
   getChildren(node?: ResultNode): ResultNode[] {
@@ -82,6 +88,7 @@ export class ResultsTreeProvider implements vscode.TreeDataProvider<ResultNode> 
   }
 
   dispose(): void {
+    clearTimeout(this.timer);
     this.changed.dispose();
   }
 }

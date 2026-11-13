@@ -27,6 +27,15 @@ describe("buildScanArguments with an outskirts that can be told to print the res
   });
 });
 
+describe("buildScanArguments with an outskirts that can be told to print absolute paths", () => {
+  it("turns relative results off before the extra arguments, which keep the last word", () => {
+    assert.deepEqual(buildScanArguments(["--relative-results"], { absolutePaths: true }), [
+      "scan", "--format", "json", "--quiet", "--no-relative-results", "--relative-results",
+    ]);
+    assert.equal(buildScanArguments([]).includes("--no-relative-results"), false);
+  });
+});
+
 describe("resolveExecutable", () => {
   it("ignores workspace values", () => {
     assert.equal(

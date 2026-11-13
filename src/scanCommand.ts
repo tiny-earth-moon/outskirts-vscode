@@ -12,7 +12,11 @@ import { installHint } from "./optionsModel";
 import { projectArguments, readProjectFolder } from "./xcodeProject";
 import { ScanState } from "./scanState";
 import { probeVersion } from "./versionProbe";
-import { printsResultsWhenAsked } from "./version";
+import { folderAliases } from "./realFolders";
+import { printsAbsolutePathsWhenAsked, printsResultsWhenAsked } from "./version";
+import { relativeResultsBase } from "./location";
+import { checkRelativeLocations } from "./relativeResults";
+import { toEditorColumns } from "./editorColumns";
 
 export class Scanner {
   private controller: AbortController | undefined;
@@ -66,6 +70,7 @@ export class Scanner {
       async (project) => {
         const controller = new AbortController();
         this.controller = controller;
+        this.store.startScan(project.key);
         try {
           counts.push(await this.run(project, controller));
           if (projects.length === 1) {
@@ -77,6 +82,7 @@ export class Scanner {
           }
           void report(error, this.output);
         } finally {
+          this.store.endScan(project.key);
           this.controller = undefined;
           this.removed = undefined;
         }
@@ -104,6 +110,7 @@ export class Scanner {
       skipBuild: config.get<boolean>("skipBuild", false),
       project: projectArguments(await readProjectFolder(cwd), extra),
       printResults: version.state === "found" && printsResultsWhenAsked(version.version),
+      absolutePaths: version.state === "found" && printsAbsolutePathsWhenAsked(version.version),
     });
     const severity = config.get<string>("severity", "warning");
     severityFromSetting(severity);
@@ -121,7 +128,13 @@ export class Scanner {
       },
     );
     this.output.appendLine(exitDescription(run));
-    const findings = toFindings(interpretRun(run), cwd);
+    const results = interpretRun(run);
+    const base = relativeResultsBase(cwd, extra);
+    await checkRelativeLocations(results, base);
+    const aliases = await folderAliases([cwd, project.workspaceFolder.uri.fsPath]);
+    const findings = await toEditorColumns(toFindings(results, base, aliases), (message) => {
+      this.output.appendLine(message);
+    });
     this.store.set(project.key, findings, severity, Date.now());
     return findings.length;
   }

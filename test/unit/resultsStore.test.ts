@@ -54,6 +54,46 @@ describe("ResultsStore", () => {
     assert.equal(store.total, 2);
   });
 
+  it("changes the severity of the results already shown, without a new scan", () => {
+    const store = new ResultsStore();
+    let changes = 0;
+    store.onDidChange(() => changes++);
+    store.set("a", [finding], "warning", 1);
+    store.markStale("a", finding.file);
+    assert.equal(store.setSeverity("a", "error"), true);
+    assert.equal(store.setSeverity("a", "error"), false);
+    assert.equal(store.setSeverity("b", "error"), false);
+    assert.deepEqual(store.get("a"), { findings: [finding], severity: "error", scannedAt: 1, stale: new Set([finding.file]) });
+    assert.equal(changes, 3);
+  });
+
+  it("marks stale the results of the files changed while their scan ran", () => {
+    const store = new ResultsStore();
+    const other: Finding = { ...finding, file: "/a/B.swift" };
+    store.noteChange(finding.file);
+    store.startScan("a");
+    store.startScan("b");
+    assert.deepEqual(store.scanned, ["a", "b"]);
+    store.noteChange(finding.file);
+    store.noteChange("/a/.build/debug/A.o");
+    store.set("a", [finding, other], "warning", 1);
+    assert.deepEqual([...(store.get("a")?.stale ?? [])], [finding.file]);
+    store.endScan("b");
+    assert.deepEqual(store.scanned, []);
+    store.startScan("a");
+    store.set("a", [finding], "warning", 2);
+    assert.equal(store.get("a")?.stale.size, 0);
+  });
+
+  it("forgets the changes of a scan that ends without results", () => {
+    const store = new ResultsStore();
+    store.startScan("a");
+    store.noteChange(finding.file);
+    store.endScan("a");
+    store.set("a", [finding], "warning", 1);
+    assert.equal(store.get("a")?.stale.size, 0);
+  });
+
   it("derives the state of a folder", () => {
     assert.equal(resultsState(undefined), "none");
     assert.equal(resultsState({ findings: [], severity: "warning", scannedAt: 0, stale: new Set<string>() }), "empty");

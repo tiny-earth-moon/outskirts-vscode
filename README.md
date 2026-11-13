@@ -2,7 +2,7 @@
 
 Shows the unused Swift code found by [outskirts](https://github.com/tiny-earth-moon/outskirts) in a side bar, in the editor and in the Problems panel, for each project of the workspace, and can hand the results to a coding agent.
 
-The extension does not analyze Swift itself: it runs the installed `outskirts` executable with `scan --format json --quiet` in the project directory and shows each result at its location. With an outskirts newer than 3.24.0, it also passes `--no-skip-stdout-results`, so that `skip_stdout_results` in the configuration file does not keep the results from it. A scan that prints nothing, not even `[]`, is reported as an error, never as "no unused code".
+The extension does not analyze Swift itself: it runs the installed `outskirts` executable with `scan --format json --quiet` in the project directory and shows each result at its location. With an outskirts newer than 3.24.0, it also passes `--no-skip-stdout-results`, so that `skip_stdout_results` in the configuration file does not keep the results from it. A scan that prints nothing, not even `[]`, is reported as an error, never as "no unused code". With outskirts 3.13.3 or newer, it passes `--no-relative-results` so that the result paths are absolute; with `--relative-results` in Extra arguments, they are resolved against the `--relative-to` and `--project-root` given there, and a scan whose paths do not exist under that base is reported as an error. outskirts counts columns in UTF-8 bytes; the extension converts them from the line of the file when the scan ends. outskirts prints real paths; when the project is reached through a symbolic link, they are shown under the path it is opened at.
 
 ## Requirements
 
@@ -26,12 +26,12 @@ The output of outskirts is written to the "outskirts" output channel.
 
 The outskirts icon in the activity bar opens the results, grouped by file or by kind of finding with their counts; clicking a result opens its location. The title bar of the view has buttons to scan, cancel, show the options, switch the grouping, clear the results, refresh the projects and open the settings. After a scan, the status bar shows the number of results; clicking it shows the view.
 
-When a file with results changes after the scan, in the editor or on disk (for example by an agent), its results are stale: their diagnostics leave the Problems panel since they may point at the wrong lines, the file is marked "changed since scan" and its results "stale" in the tree, and the project and the status bar tell how many files are to rescan. Stale results are left out of Fix with Agent. Nothing is rescanned automatically, since a scan builds the project: scan again to refresh them.
+When a file with results changes after the scan starts, in the editor or on disk (for example by an agent; each project is watched as a whole), its results are stale: their diagnostics leave the Problems panel since they may point at the wrong lines, the file is marked "changed since scan" and its results "stale" in the tree, and the project and the status bar tell how many files are to rescan. Stale results are left out of Fix with Agent. Nothing is rescanned automatically, since a scan builds the project: scan again to refresh them.
 
 Below the results, the collapsible **Scan Options** section shows the options of a project with their current values:
 
 - **Reuse existing index**: a checkbox that scans without building, on the index of the last build (`--skip-build`).
-- **Severity**: click to pick the severity of the diagnostics.
+- **Severity**: click to pick the severity of the diagnostics; the diagnostics already shown follow it.
 - **Extra arguments**: click to edit them, quoted like in a shell; no shell is used.
 - **Group results**: click to switch between grouping by file and by kind.
 - **Executable**: the executable and its version, or "not found"; click to open the settings.
