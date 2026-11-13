@@ -6,6 +6,10 @@ describe("buildScanArguments", () => {
   it("asks for quiet JSON and appends the extra arguments", () => {
     assert.deepEqual(buildScanArguments(["--schemes", "App"]), ["scan", "--format", "json", "--quiet", "--schemes", "App"]);
   });
+
+  it("asks to reuse the index before the extra arguments when skipBuild is set", () => {
+    assert.deepEqual(buildScanArguments(["--schemes", "App"], true), ["scan", "--format", "json", "--quiet", "--skip-build", "--schemes", "App"]);
+  });
 });
 
 describe("resolveExecutable", () => {

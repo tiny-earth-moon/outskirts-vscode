@@ -1,6 +1,8 @@
 import * as assert from "node:assert/strict";
 import * as path from "node:path";
 import * as vscode from "vscode";
+import type { OutskirtsApi } from "../../../src/extension";
+import type { ResultGroup } from "../../../src/treeModel";
 
 const root = path.resolve(__dirname, "../../../..");
 
@@ -18,6 +20,19 @@ describe("outskirts.scan", () => {
     assert.equal(diagnostic.code, "unused");
     assert.equal(diagnostic.severity, vscode.DiagnosticSeverity.Warning);
     assert.deepEqual([diagnostic.range.start.line, diagnostic.range.start.character], [2, 5]);
+
+    const extension = vscode.extensions.getExtension<OutskirtsApi>("tiny-earth-moon.outskirts");
+    assert.ok(extension);
+    const { tree } = extension.exports;
+    const [group, ...others] = tree.getChildren() as ResultGroup[];
+    assert.equal(others.length, 0);
+    assert.equal(group.label, "main.swift");
+    assert.equal(tree.getTreeItem(group).description, "Sources/Demo · 1");
+    const [leaf] = tree.getChildren(group);
+    const item = tree.getTreeItem(leaf);
+    assert.equal(item.label, "function unusedHelper()");
+    assert.equal(item.description, "Unused, line 3");
+    assert.equal(item.command?.command, "vscode.open");
 
     await vscode.commands.executeCommand("outskirts.clear");
     assert.equal(vscode.languages.getDiagnostics(file).length, 0);
