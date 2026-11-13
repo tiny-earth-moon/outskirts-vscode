@@ -7,6 +7,7 @@ import {
   agentPickPlaceholder,
   agentStatus,
   agentTooltip,
+  statusError,
 } from "../../src/agentStatus";
 
 const claude = knownAgents[0];
@@ -43,6 +44,21 @@ describe("agentStatus", () => {
 
   it("passes no selection through", () => {
     assert.deepEqual(agentStatus({ kind: "none" }, () => "/bin/claude", probed("available")), { kind: "none" });
+  });
+});
+
+describe("agentStatus with an executable that is not started", () => {
+  const reason = "C:\\npm\\claude.cmd is a batch file.";
+  const refuse = () => reason;
+
+  it("reports the reason for a known agent and for a custom command", () => {
+    const known = agentStatus({ kind: "agent", agent: claude }, () => "C:\\npm\\claude.cmd", probed("unknown"), refuse);
+    assert.deepEqual(known, { kind: "missing", agent: claude, reason });
+    assert.equal(statusError(known), reason);
+    const customStatus = agentStatus({ kind: "agent", agent: custom }, () => "C:\\npm\\agent.cmd", probed("unknown"), refuse);
+    assert.deepEqual(customStatus, { kind: "invalid", reason });
+    assert.equal(statusError(customStatus), reason);
+    assert.equal(statusError({ kind: "missing", agent: claude }), "The selected agent is not installed.");
   });
 });
 

@@ -19,7 +19,7 @@ export async function pickAgent(registry: AgentRegistry): Promise<boolean> {
         registry.refresh();
         continue;
       case "unavailable":
-        void vscode.window.showWarningMessage(`${picked.executable} was ${doesNotRun}; install the agent, then refresh.`);
+        void vscode.window.showWarningMessage(registry.refusal(picked.executable) ?? `${picked.executable} was ${doesNotRun}; install the agent, then refresh.`);
         return false;
       case "custom":
         await config.update("agent", "custom", vscode.ConfigurationTarget.Global);

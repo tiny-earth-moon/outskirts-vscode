@@ -28,6 +28,8 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test:unit
+      - name: Check that CHANGELOG.md has a dated section for the version
+        run: node out/scripts/checkChangelog.js
       - run: xvfb-run -a npm run test:integration
       - run: npx vsce package --out outskirts.vsix
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -44,16 +46,15 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: outskirts-vsix
-      - run: npx vsce publish --oidc --packagePath outskirts.vsix
+      # The publishing jobs hold the OIDC token: they install none of the project's dependencies and only
+      # run the publishing tool, at its exact version in package-lock.json, on the .vsix of the package job.
+      - run: npx --yes @vscode/vsce@4.1.1 publish --oidc --packagePath outskirts.vsix
 
   open-vsx:
     needs: package
@@ -63,12 +64,9 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: outskirts-vsix
@@ -79,8 +77,8 @@ jobs:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: |
           if [ -n "$OVSX_PAT" ]; then
-            npx ovsx publish outskirts.vsix
+            npx --yes ovsx@1.4.0 publish outskirts.vsix
           else
             unset OVSX_PAT
-            npx ovsx publish outskirts.vsix --trusted-publishing
+            npx --yes ovsx@1.4.0 publish outskirts.vsix --trusted-publishing
           fi

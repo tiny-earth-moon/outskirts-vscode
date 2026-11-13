@@ -15,6 +15,7 @@ export function agentStatus(
   selection: AgentSelection,
   resolve: (agent: AgentDefinition) => string | undefined,
   availability: (executable: string) => AgentAvailability,
+  refusal: (executable: string) => string | undefined = () => undefined,
 ): AgentStatus {
   if (selection.kind !== "agent") {
     return selection;
@@ -24,10 +25,21 @@ export function agentStatus(
   if (executable === undefined) {
     return { kind: "missing", agent };
   }
+  const refused = refusal(executable);
+  if (refused !== undefined) {
+    return agent.id === customAgentId ? { kind: "invalid", reason: refused } : { kind: "missing", agent, reason: refused };
+  }
   if (agent.id !== customAgentId && availability(executable) === "unavailable") {
     return { kind: "missing", agent, reason: `${executable} was ${doesNotRun}.` };
   }
   return { kind: "ready", agent, executable };
+}
+
+export function statusError(status: AgentStatus): string {
+  if (status.kind === "invalid") {
+    return status.reason;
+  }
+  return status.kind === "missing" && status.reason !== undefined ? status.reason : "The selected agent is not installed.";
 }
 
 export function agentDescription(status: AgentStatus): string {

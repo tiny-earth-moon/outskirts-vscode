@@ -32,6 +32,6 @@ export interface LaunchRequest {
   cwd: string;
 }
 
-export function launchRequest(agent: AgentDefinition, executable: string, prompt: string, cwd: string): LaunchRequest {
-  return { name: `outskirts: ${agent.name}`, executable, args: substitutePrompt(agent.args, prompt), cwd };
+export function launchRequest(agent: AgentDefinition, executable: string, prompt: string, cwd: string, prefix: readonly string[] = []): LaunchRequest {
+  return { name: `outskirts: ${agent.name}`, executable, args: [...prefix, ...substitutePrompt(agent.args, prompt)], cwd };
 }
