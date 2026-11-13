@@ -1,10 +1,11 @@
 import * as vscode from "vscode";
 import { CurrentFolder } from "./currentFolder";
 import { editArguments, editSeverity, setSkipBuild } from "./editOptions";
-import { OptionRow } from "./optionsModel";
+import { OptionRow, optionsDescription } from "./optionsModel";
 import { executableName, OptionsTreeProvider } from "./optionsTree";
-import { pickOneFolder } from "./pickFolder";
-import { folderKey, ScannableFolders } from "./scannableFolders";
+import { pickOneProject } from "./pickFolder";
+import { isNested, Project } from "./project";
+import { ProjectList } from "./projectList";
 import { Scanner } from "./scanCommand";
 import { GroupBy } from "./treeModel";
 import { probeVersion } from "./versionProbe";
@@ -18,21 +19,24 @@ export interface OptionsView extends vscode.Disposable {
 }
 
 export function createOptionsView(
-  scannable: ScannableFolders,
+  projects: ProjectList,
   scanner: Scanner,
   groupBy: { get: () => GroupBy; set: (mode: GroupBy) => void },
 ): OptionsView {
   const current = new CurrentFolder();
-  const folder = (): vscode.WorkspaceFolder | undefined => {
+  const project = (): Project | undefined => {
     const key = current.current;
-    return key === undefined ? undefined : scannable.find(key);
+    return key === undefined ? undefined : projects.find(key);
   };
-  const tree = new OptionsTreeProvider(folder, groupBy.get);
+  const tree = new OptionsTreeProvider(() => project()?.workspaceFolder, groupBy.get);
   const view = vscode.window.createTreeView("outskirts.options", { treeDataProvider: tree });
   const refresh = (): void => {
-    const shown = folder();
-    view.description = current.several ? shown?.name : undefined;
-    void vscode.commands.executeCommand("setContext", "outskirts.severalFolders", current.several);
+    const shown = project();
+    view.description = optionsDescription(
+      shown === undefined ? undefined : { name: shown.name, folderName: shown.workspaceFolder.name, nested: isNested(shown) },
+      current.several,
+    );
+    void vscode.commands.executeCommand("setContext", "outskirts.severalProjects", current.several);
     tree.refresh();
   };
   const select = (key: string): void => {
@@ -54,26 +58,26 @@ export function createOptionsView(
       tree.refresh();
     });
   };
-  const withFolder = (action: (target: vscode.WorkspaceFolder) => Promise<void>) => async (): Promise<void> => {
-    const target = folder();
+  const withProject = (action: (target: Project) => Promise<void>) => async (): Promise<void> => {
+    const target = project();
     if (target !== undefined) {
       await action(target);
     }
   };
   const setChecked = async (row: OptionRow, checked: boolean): Promise<void> => {
-    const target = folder();
+    const target = project();
     if (row.id === "skipBuild" && target !== undefined) {
-      await setSkipBuild(target, checked);
+      await setSkipBuild(target.workspaceFolder, checked);
     }
   };
-  current.setFolders(scannable.folders.map(folderKey));
+  current.setFolders(projects.projects.map((entry) => entry.key));
   reprobe();
   refresh();
   const subscriptions = [
     tree,
     view,
-    scannable.onDidChange(() => {
-      current.setFolders(scannable.folders.map(folderKey));
+    projects.onDidChange(() => {
+      current.setFolders(projects.projects.map((entry) => entry.key));
       refresh();
     }),
     scanner.onDidChangeRunning(() => {
@@ -93,25 +97,25 @@ export function createOptionsView(
         await setChecked(row, state === vscode.TreeItemCheckboxState.Checked);
       }
     }),
-    vscode.commands.registerCommand("outskirts.editSeverity", withFolder(editSeverity)),
-    vscode.commands.registerCommand("outskirts.editArguments", withFolder(editArguments)),
+    vscode.commands.registerCommand("outskirts.editSeverity", withProject((target) => editSeverity(target.workspaceFolder))),
+    vscode.commands.registerCommand("outskirts.editArguments", withProject((target) => editArguments(target.workspaceFolder))),
     vscode.commands.registerCommand("outskirts.toggleGroupBy", () => {
       groupBy.set(groupBy.get() === "kind" ? "file" : "kind");
     }),
-    vscode.commands.registerCommand("outskirts.scanCurrentFolder", withFolder((target) => scanner.scan([target]))),
+    vscode.commands.registerCommand("outskirts.scanCurrentFolder", withProject((target) => scanner.scan([target]))),
     vscode.commands.registerCommand("outskirts.selectFolder", async () => {
-      const picked = await pickOneFolder(scannable.folders);
+      const picked = await pickOneProject(projects.projects);
       if (picked !== undefined) {
-        select(folderKey(picked));
+        select(picked.key);
       }
     }),
     vscode.commands.registerCommand("outskirts.scanOptions", async () => {
       if (current.several) {
-        const picked = await pickOneFolder(scannable.folders);
+        const picked = await pickOneProject(projects.projects);
         if (picked === undefined) {
           return;
         }
-        select(folderKey(picked));
+        select(picked.key);
       }
       await vscode.commands.executeCommand("outskirts.options.focus");
     }),

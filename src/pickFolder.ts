@@ -1,58 +1,57 @@
 import * as vscode from "vscode";
+import { Project } from "./project";
 
-const noFolderMessage = "Open a folder that holds a Swift package or an Xcode project.";
+const noProjectMessage = "Open a folder that holds a Swift package or an Xcode project, at its root or one level below.";
 
-interface FolderItem extends vscode.QuickPickItem {
-  folders: readonly vscode.WorkspaceFolder[];
-}
-
-export function activeFolder(folders: readonly vscode.WorkspaceFolder[]): vscode.WorkspaceFolder | undefined {
-  const active = vscode.window.activeTextEditor?.document.uri;
-  const folder = active === undefined ? undefined : vscode.workspace.getWorkspaceFolder(active);
-  return folders.find((candidate) => candidate.uri.toString() === folder?.uri.toString());
+interface ProjectItem extends vscode.QuickPickItem {
+  projects: readonly Project[];
 }
 
 export async function pickScanTargets(
-  folders: readonly vscode.WorkspaceFolder[],
-  preselected: vscode.WorkspaceFolder | undefined,
-): Promise<readonly vscode.WorkspaceFolder[] | undefined> {
-  if (folders.length <= 1) {
-    return single(folders);
+  projects: readonly Project[],
+  preselected: Project | undefined,
+): Promise<readonly Project[] | undefined> {
+  if (projects.length <= 1) {
+    return single(projects);
   }
-  const items: FolderItem[] = [
-    ...folders.map((folder) => ({ label: folder.name, description: folder.uri.fsPath, folders: [folder] })),
-    { label: "All folders", description: "one after another", folders },
+  const items: ProjectItem[] = [
+    ...projects.map(item),
+    { label: "All projects", description: "one after another", projects },
   ];
-  const picked = await choose(items, "Folder to scan with outskirts", items.find((item) => item.folders[0] === preselected && item.folders.length === 1));
-  return picked?.folders;
+  const active = items.find((candidate) => candidate.projects.length === 1 && candidate.projects[0] === preselected);
+  const picked = await choose(items, "Project to scan with outskirts", active);
+  return picked?.projects;
 }
 
-export async function pickOneFolder(folders: readonly vscode.WorkspaceFolder[]): Promise<vscode.WorkspaceFolder | undefined> {
-  if (folders.length <= 1) {
-    return single(folders)?.[0];
+export async function pickOneProject(projects: readonly Project[]): Promise<Project | undefined> {
+  if (projects.length <= 1) {
+    return single(projects)?.[0];
   }
-  const items = folders.map((folder) => ({ label: folder.name, description: folder.uri.fsPath, folders: [folder] }));
-  const picked = await choose(items, "Folder whose scan options to show", undefined);
-  return picked?.folders[0];
+  const picked = await choose(projects.map(item), "Project whose scan options to show", undefined);
+  return picked?.projects[0];
 }
 
-function single(folders: readonly vscode.WorkspaceFolder[]): readonly vscode.WorkspaceFolder[] | undefined {
-  if (folders.length === 0) {
-    void vscode.window.showErrorMessage(noFolderMessage);
+function item(project: Project): ProjectItem {
+  return { label: project.name, description: project.uri.fsPath, projects: [project] };
+}
+
+function single(projects: readonly Project[]): readonly Project[] | undefined {
+  if (projects.length === 0) {
+    void vscode.window.showErrorMessage(noProjectMessage);
     return undefined;
   }
-  return folders;
+  return projects;
 }
 
-function choose(items: FolderItem[], placeholder: string, active: FolderItem | undefined): Promise<FolderItem | undefined> {
-  const pick = vscode.window.createQuickPick<FolderItem>();
+function choose(items: ProjectItem[], placeholder: string, active: ProjectItem | undefined): Promise<ProjectItem | undefined> {
+  const pick = vscode.window.createQuickPick<ProjectItem>();
   pick.items = items;
   pick.placeholder = placeholder;
   if (active !== undefined) {
     pick.activeItems = [active];
   }
   return new Promise((resolve) => {
-    let accepted: FolderItem | undefined;
+    let accepted: ProjectItem | undefined;
     pick.onDidAccept(() => {
       accepted = pick.selectedItems[0];
       pick.hide();

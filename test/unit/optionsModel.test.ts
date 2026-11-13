@@ -1,5 +1,5 @@
 import * as assert from "node:assert/strict";
-import { installHint, OptionsSnapshot, optionRows } from "../../src/optionsModel";
+import { installHint, OptionsSnapshot, optionRows, optionsDescription } from "../../src/optionsModel";
 
 const snapshot: OptionsSnapshot = {
   skipBuild: false,
@@ -33,5 +33,21 @@ describe("optionRows", () => {
     const row = optionRows({ ...snapshot, version: { state: "missing" } })[4];
     assert.equal(row.description, "outskirts · not found");
     assert.equal(row.tooltip, installHint);
+  });
+});
+
+describe("optionsDescription", () => {
+  const app = { name: "App", folderName: "App", nested: false };
+  const nested = { name: "Library", folderName: "Repos", nested: true };
+
+  it("names the project only when there are several", () => {
+    assert.equal(optionsDescription(app, false), undefined);
+    assert.equal(optionsDescription(app, true), "App");
+    assert.equal(optionsDescription(undefined, true), undefined);
+  });
+
+  it("says that a nested project shares the options of its workspace folder", () => {
+    assert.equal(optionsDescription(nested, false), "Library · shared by Repos");
+    assert.equal(optionsDescription(nested, true), "Library · shared by Repos");
   });
 });

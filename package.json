@@ -27,7 +27,14 @@
     "workspaceContains:*.xcworkspace",
     "workspaceContains:project.yml",
     "workspaceContains:.outskirts.yml",
-    "workspaceContains:.periphery.yml"
+    "workspaceContains:.periphery.yml",
+    "workspaceContains:*/Package.swift",
+    "workspaceContains:*/*.xcodeproj",
+    "workspaceContains:*/*.xcworkspace",
+    "workspaceContains:*/project.yml",
+    "workspaceContains:*/.outskirts.yml",
+    "workspaceContains:*/.periphery.yml",
+    "onView:outskirts.results"
   ],
   "capabilities": {
     "untrustedWorkspaces": {
@@ -57,7 +64,7 @@
       },
       {
         "command": "outskirts.scanFolder",
-        "title": "Scan This Folder",
+        "title": "Scan This Project",
         "category": "outskirts",
         "icon": "$(play)"
       },
@@ -75,9 +82,15 @@
       },
       {
         "command": "outskirts.clearFolder",
-        "title": "Clear This Folder",
+        "title": "Clear This Project",
         "category": "outskirts",
         "icon": "$(clear-all)"
+      },
+      {
+        "command": "outskirts.refresh",
+        "title": "Refresh Projects",
+        "category": "outskirts",
+        "icon": "$(refresh)"
       },
       {
         "command": "outskirts.groupByFile",
@@ -111,7 +124,7 @@
       },
       {
         "command": "outskirts.selectFolder",
-        "title": "Select Folder",
+        "title": "Select Project",
         "category": "outskirts",
         "icon": "$(root-folder)"
       },
@@ -195,7 +208,7 @@
     "viewsWelcome": [
       {
         "view": "outskirts.results",
-        "contents": "No Swift package or Xcode project in this workspace. Open a folder whose root holds Package.swift, an Xcode project or workspace, project.yml or .outskirts.yml.",
+        "contents": "No Swift package or Xcode project in this workspace. Open a folder that holds Package.swift, an Xcode project or workspace, project.yml or .outskirts.yml at its root, or a folder of such projects.\n[Refresh](command:outskirts.refresh)",
         "when": "outskirts.state == unavailable"
       },
       {
@@ -247,6 +260,11 @@
           "group": "navigation@4"
         },
         {
+          "command": "outskirts.refresh",
+          "when": "view == outskirts.results",
+          "group": "navigation@5"
+        },
+        {
           "command": "outskirts.openSettings",
           "when": "view == outskirts.results",
           "group": "9_settings"
@@ -263,7 +281,7 @@
         },
         {
           "command": "outskirts.selectFolder",
-          "when": "view == outskirts.options && outskirts.severalFolders",
+          "when": "view == outskirts.options && outskirts.severalProjects",
           "group": "navigation@2"
         },
         {

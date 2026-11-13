@@ -63,3 +63,16 @@ export function optionRows(snapshot: OptionsSnapshot): OptionRow[] {
     },
   ];
 }
+
+export interface ShownProject {
+  name: string;
+  folderName: string;
+  nested: boolean;
+}
+
+export function optionsDescription(project: ShownProject | undefined, several: boolean): string | undefined {
+  if (project?.nested === true) {
+    return `${project.name} · shared by ${project.folderName}`;
+  }
+  return several ? project?.name : undefined;
+}

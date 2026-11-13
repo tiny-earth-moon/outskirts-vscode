@@ -6,10 +6,9 @@ import { ResultsStore } from "./resultsStore";
 import { CancelledError, ExecutableNotFoundError, runProcess } from "./runProcess";
 import { buildScanArguments } from "./scanArguments";
 import { resolveExecutable } from "./executable";
-import { folderKey } from "./scannableFolders";
+import { Project } from "./project";
 import { scanSummary, sequenceSummary } from "./summary";
 import { installHint } from "./optionsModel";
-
 
 export class Scanner {
   private controller: AbortController | undefined;
@@ -36,7 +35,7 @@ export class Scanner {
     this.controller?.abort();
   }
 
-  async scan(folders: readonly vscode.WorkspaceFolder[]): Promise<void> {
+  async scan(projects: readonly Project[]): Promise<void> {
     if (this.running) {
       void vscode.window.showWarningMessage("A scan is already running.");
       return;
@@ -47,16 +46,16 @@ export class Scanner {
     }
     this.cancelled = false;
     const counts: number[] = [];
-    for (const folder of folders) {
+    for (const project of projects) {
       if (this.cancelled) {
         break;
       }
       const controller = new AbortController();
-      this.setController(controller, folderKey(folder));
+      this.setController(controller, project.key);
       try {
-        counts.push(await this.run(folder, controller));
-        if (folders.length === 1) {
-          void announce(scanSummary(counts[0], folder.name), counts[0]);
+        counts.push(await this.run(project, controller));
+        if (projects.length === 1) {
+          void announce(scanSummary(counts[0], project.name), counts[0]);
         }
       } catch (error) {
         if (error instanceof CancelledError) {
@@ -67,7 +66,7 @@ export class Scanner {
         this.setController(undefined, undefined);
       }
     }
-    if (folders.length > 1 && counts.length > 0) {
+    if (projects.length > 1 && counts.length > 0) {
       const total = counts.reduce((sum, count) => sum + count, 0);
       void announce(sequenceSummary(counts), total);
     }
@@ -78,14 +77,14 @@ export class Scanner {
     this.runningChanged.dispose();
   }
 
-  private async run(folder: vscode.WorkspaceFolder, controller: AbortController): Promise<number> {
-    const config = vscode.workspace.getConfiguration("outskirts", folder.uri);
+  private async run(project: Project, controller: AbortController): Promise<number> {
+    const config = vscode.workspace.getConfiguration("outskirts", project.workspaceFolder.uri);
     const executable = resolveExecutable(config.inspect<string>("path"));
     const args = buildScanArguments(config.get<string[]>("arguments", []), config.get<boolean>("skipBuild", false));
-    const cwd = folder.uri.fsPath;
+    const cwd = project.uri.fsPath;
     const severity = config.get<string>("severity", "warning");
     severityFromSetting(severity);
-    const title = `Scanning ${folder.name}`;
+    const title = `Scanning ${project.name}`;
     const run = await vscode.window.withProgress(
       { location: vscode.ProgressLocation.Notification, title, cancellable: true },
       (_progress, token) => {
@@ -100,7 +99,7 @@ export class Scanner {
     );
     this.output.appendLine(`outskirts exited with status ${String(run.exitCode)}.`);
     const findings = toFindings(interpretRun(run), cwd);
-    this.store.set(folderKey(folder), findings, severity, Date.now());
+    this.store.set(project.key, findings, severity, Date.now());
     return findings.length;
   }
 
