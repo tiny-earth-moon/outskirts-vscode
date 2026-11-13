@@ -13,7 +13,7 @@ outskirts installed, e.g. `brew install tiny-earth-moon/tap/outskirts`, and a pr
 - **outskirts: Scan** scans the project and replaces its previous results; with several projects it asks which one, or all of them. The scan can be cancelled from its notification; when it ends, a message gives the number of results and names the project.
 - **outskirts: Cancel Scan** stops the running scan. Only one scan runs at a time.
 - **outskirts: Clear Results** removes the results of every project.
-- **outskirts: Refresh Projects** looks for projects again; the list also follows added or removed folders and project files.
+- **outskirts: Refresh Projects** looks for projects again; the list also follows added or removed workspace folders, sub-directories and project files: `Package.swift`, Xcode projects and workspaces, `.outskirts.yml` and `.periphery.yml`.
 - **outskirts: Show Scan Options** opens the Scan Options view of the side bar; with several projects it first asks which project to show.
 - **outskirts: Group by File** / **Group by Kind** change how the side bar groups the results.
 - **outskirts: Open Settings** shows the settings of the extension.

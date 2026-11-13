@@ -1,4 +1,4 @@
-import { isScannableRoot } from "./scannable";
+import { isScannableRoot, markerGlob } from "./scannable";
 
 const skippedDirectories = new Set(["node_modules", "build", "DerivedData"]);
 
@@ -19,6 +19,8 @@ export interface ProjectEntry {
   folderName: string;
   nested: boolean;
 }
+
+export const projectWatchPatterns: readonly string[] = [markerGlob, `*/${markerGlob}`, "*"];
 
 export function isCandidateDirectory(name: string, directory: boolean, symlink: boolean): boolean {
   return directory && !symlink && !name.startsWith(".") && !skippedDirectories.has(name);
