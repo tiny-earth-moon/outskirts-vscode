@@ -74,7 +74,7 @@ function fileGroup(file: string, root: string | undefined): ResultGroup {
   return { key: file, label: path.basename(file), description: dir === "." ? undefined : dir, findings: [] };
 }
 
-function compareFindings(a: Finding, b: Finding): number {
+export function compareFindings(a: Finding, b: Finding): number {
   return compare(a.file, b.file) || a.line - b.line || a.column - b.column || compare(a.message, b.message);
 }
 
