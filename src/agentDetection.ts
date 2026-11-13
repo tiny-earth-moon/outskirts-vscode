@@ -1,5 +1,6 @@
 import * as path from "node:path";
 import { AgentDefinition } from "./agents";
+import { hasExecutableExtension } from "./executableFile";
 
 export type ExistsPredicate = (file: string) => boolean;
 
@@ -16,21 +17,27 @@ export function findExecutable(
   if (executable === "") {
     return undefined;
   }
+  const names = candidateNames(executable, extensions);
   if (path.isAbsolute(executable)) {
-    return exists(executable) ? executable : undefined;
+    return names.find((name) => exists(name));
   }
   if (executable.includes("/") || executable.includes("\\")) {
     return undefined;
   }
   for (const directory of directories) {
-    for (const extension of extensions) {
-      const candidate = path.join(directory, executable + extension);
+    for (const name of names) {
+      const candidate = path.join(directory, name);
       if (exists(candidate)) {
         return candidate;
       }
     }
   }
   return undefined;
+}
+
+function candidateNames(executable: string, extensions: readonly string[]): string[] {
+  const names = extensions.map((extension) => executable + extension);
+  return !extensions.includes("") && hasExecutableExtension(executable, extensions) ? [executable, ...names] : names;
 }
 
 export function detectAgents(
