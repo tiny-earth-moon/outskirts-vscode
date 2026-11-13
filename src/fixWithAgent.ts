@@ -34,6 +34,7 @@ export function registerFixWithAgent(store: ResultsStore, projects: ProjectList,
       void vscode.window.showInformationMessage("No results to fix: scan the project first.");
       return;
     }
+    await registry.probeSelected();
     let status = registry.status();
     if (status.kind !== "ready") {
       if (!(await pickAgent(registry))) {

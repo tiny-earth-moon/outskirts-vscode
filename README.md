@@ -55,6 +55,8 @@ The agent is chosen once, from the **Agent** row of Scan Options or **outskirts:
 | Gemini CLI | `gemini -i <prompt>` |
 | Cursor Agent | `cursor-agent <prompt>` |
 
+An agent found on the PATH is checked with `<agent> --version` when the list opens and before it starts, once per session (again after **Refresh**); one that does not run, such as a launcher left by another tool, is listed as not available and reads "(not installed)".
+
 **Custom command…** uses `outskirts.agentCommand` instead, e.g. `["my-agent", "--interactive", "${prompt}"]`: the executable first, an absolute path or a name on the PATH, and `${prompt}` once, as a whole argument. If no agent is set, or the one set is not installed, Fix with Agent asks first.
 
 The executable is started directly as the process of the terminal, with the prompt as one argument: no shell reads the command or the prompt, and control characters are stripped from the names and paths it holds. The agent settings are read from user settings only, never from a workspace, and an agent only starts in a trusted workspace.

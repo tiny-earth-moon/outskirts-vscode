@@ -1,9 +1,10 @@
 import * as vscode from "vscode";
 import { AgentRegistry } from "./agentRegistry";
-import { AgentPickItem, agentPickItems, agentPickPlaceholder } from "./agentStatus";
+import { AgentPickChoice, agentPickItems, agentPickPlaceholder, doesNotRun } from "./agentStatus";
 
 interface PickItem extends vscode.QuickPickItem {
-  item: AgentPickItem;
+  choice?: AgentPickChoice;
+  current?: boolean;
 }
 
 export async function pickAgent(registry: AgentRegistry): Promise<boolean> {
@@ -17,6 +18,9 @@ export async function pickAgent(registry: AgentRegistry): Promise<boolean> {
       case "refresh":
         registry.refresh();
         continue;
+      case "unavailable":
+        void vscode.window.showWarningMessage(`${picked.executable} was ${doesNotRun}; install the agent, then refresh.`);
+        return false;
       case "custom":
         await config.update("agent", "custom", vscode.ConfigurationTarget.Global);
         await vscode.commands.executeCommand("workbench.action.openSettings", "outskirts.agentCommand");
@@ -28,30 +32,54 @@ export async function pickAgent(registry: AgentRegistry): Promise<boolean> {
   }
 }
 
-function choose(registry: AgentRegistry): Promise<AgentPickItem["choice"] | undefined> {
-  const items: PickItem[] = agentPickItems(registry.detected, registry.selectedId).map((item) => ({
-    label: item.choice.kind === "refresh" ? "$(refresh) Refresh" : item.current ? `$(check) ${item.label}` : item.label,
-    description: item.description,
-    item,
-  }));
-  return new Promise((resolve) => {
-    const pick = vscode.window.createQuickPick<PickItem>();
-    pick.title = "Select Agent";
-    pick.items = items;
-    pick.placeholder = agentPickPlaceholder(registry.detected);
-    const current = items.find((entry) => entry.item.current);
-    if (current !== undefined) {
-      pick.activeItems = [current];
+function items(registry: AgentRegistry): PickItem[] {
+  const availability = (executable: string) => registry.availability(executable);
+  const result: PickItem[] = [];
+  let previous: AgentPickChoice["kind"] = "agent";
+  for (const item of agentPickItems(registry.detected, registry.selectedId, availability)) {
+    if (item.choice.kind === "unavailable" && previous !== "unavailable") {
+      result.push({ label: "not available", kind: vscode.QuickPickItemKind.Separator });
+    } else if (item.choice.kind === "custom") {
+      result.push({ label: "", kind: vscode.QuickPickItemKind.Separator });
     }
+    previous = item.choice.kind;
+    const icon = item.choice.kind === "refresh" ? "$(refresh) " : item.current ? "$(check) " : "";
+    result.push({ label: `${icon}${item.label}`, description: item.description, choice: item.choice, current: item.current });
+  }
+  return result;
+}
+
+function choose(registry: AgentRegistry): Promise<AgentPickChoice | undefined> {
+  const pick = vscode.window.createQuickPick<PickItem>();
+  pick.title = "Select Agent";
+  pick.placeholder = "Looking for installed agents…";
+  pick.busy = true;
+  let hidden = false;
+  const result = new Promise<AgentPickChoice | undefined>((resolve) => {
     let accepted: PickItem | undefined;
     pick.onDidAccept(() => {
       accepted = pick.selectedItems[0];
       pick.hide();
     });
     pick.onDidHide(() => {
-      resolve(accepted?.item.choice);
+      hidden = true;
+      resolve(accepted?.choice);
       pick.dispose();
     });
-    pick.show();
   });
+  pick.show();
+  void registry.probeDetected().then(() => {
+    if (hidden) {
+      return;
+    }
+    const entries = items(registry);
+    pick.items = entries;
+    pick.placeholder = agentPickPlaceholder(registry.detected, (executable) => registry.availability(executable));
+    const current = entries.find((entry) => entry.current === true);
+    if (current !== undefined) {
+      pick.activeItems = [current];
+    }
+    pick.busy = false;
+  });
+  return result;
 }
