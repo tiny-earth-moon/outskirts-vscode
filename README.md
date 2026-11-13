@@ -10,10 +10,10 @@ outskirts installed, e.g. `brew install tiny-earth-moon/tap/outskirts`, and a pr
 
 ## Commands
 
-- **outskirts: Scan** scans the folder of the active editor (or the folder you pick in a multi-root workspace) and replaces the previous results. The scan can be cancelled from its notification; when it ends, a message gives the number of results.
+- **outskirts: Scan** scans the workspace folder and replaces its previous results; with several folders it asks which one, or all of them. The scan can be cancelled from its notification; when it ends, a message gives the number of results.
 - **outskirts: Cancel Scan** stops the running scan. Only one scan runs at a time.
-- **outskirts: Clear Results** removes the results.
-- **outskirts: Scan Options…** toggles reusing the existing index, sets the severity and edits the extra arguments of the workspace folder. Arguments are quoted like in a shell, but no shell is used.
+- **outskirts: Clear Results** removes the results of every folder.
+- **outskirts: Scan Options…** toggles reusing the existing index, sets the severity and edits the extra arguments of a workspace folder. Arguments are quoted like in a shell, but no shell is used.
 - **outskirts: Group by File** / **Group by Kind** change how the side bar groups the results.
 - **outskirts: Open Settings** shows the settings of the extension.
 
@@ -22,6 +22,10 @@ The output of outskirts is written to the "outskirts" output channel.
 ## Side bar
 
 The outskirts icon in the activity bar opens the results, grouped by file or by kind of finding with their counts; clicking a result opens its location. The title bar of the view has buttons to scan, cancel, change the options, switch the grouping, clear the results and open the settings. After a scan, the status bar shows the number of results; clicking it shows the view.
+
+## Several folders
+
+In a multi-root workspace, each folder whose root holds `Package.swift`, an Xcode project or workspace, `project.yml`, `.outskirts.yml` or `.periphery.yml` keeps its own results: scanning or clearing one folder leaves the others untouched. The side bar then lists one node per folder with its number of results and the time of its last scan, and buttons to scan or clear that folder. **outskirts: Scan** offers each folder, preselecting the folder of the active editor, plus **All folders**, which scans them one after another; cancelling stops the rest. The status bar shows the total, and its tooltip the count of each folder.
 
 ## Settings
 

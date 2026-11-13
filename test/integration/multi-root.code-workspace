@@ -1,0 +1,7 @@
+{
+  "folders": [
+    { "name": "App", "path": "fixture-workspace" },
+    { "name": "Library", "path": "fixture-library" },
+    { "name": "Notes", "path": "fixture-notes" }
+  ]
+}
