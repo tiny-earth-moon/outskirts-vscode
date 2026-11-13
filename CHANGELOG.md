@@ -7,6 +7,10 @@
 - **All projects**: the scan stays running from one project to the next, so the Cancel button and the status bar no longer flicker between them; an outskirts stopped by a signal is reported as "stopped by signal SIGKILL", not "exited with status null".
 - **Fix with Agent**: names and paths in the prompt have their invisible characters (controls, line and paragraph separators, tag characters, bidirectional controls, zero-width characters) replaced with a visible "�", so that a name can no longer hide text or a line break from the reader of the prompt; ordinary names, emoji included, are unchanged.
 - **Fix with Agent on Windows**: the prompt is shortened, with the number of results left out, so that the command line of the agent stays under the 32 767 characters that Windows accepts, instead of failing to start; the other platforms keep their 100 000-byte limit.
+- **Error messages**: a project folder that no longer exists is reported as such, not as "executable not found".
+- **Output channel**: shows the messages of outskirts and the size of the results, no longer the whole JSON of the results.
+- **outskirts.path**: a leading `~` stands for the home folder. The version check runs in the project folder, and an outskirts that does not answer in time shows "no answer to version" instead of "not found".
+- **Executable lookup**: a name in `outskirts.path` is looked up on the PATH before the scan, never in the project folder (Windows searched it first), and only absolute PATH entries count. A relative path is no longer accepted: give an absolute path or a name.
 
 ## 0.1.0 (2026-11-13)
 
