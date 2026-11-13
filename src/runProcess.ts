@@ -56,7 +56,7 @@ export function runProcess(executable: string, args: string[], options: RunOptio
         reject(new CancelledError("The scan was cancelled."));
         return;
       }
-      options.onOutput(stdout);
+      options.onOutput(`Read ${Buffer.byteLength(stdout)} bytes of results from stdout.\n`);
       resolve({ exitCode, signal, stdout, stderr });
     });
   });

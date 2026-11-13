@@ -6,6 +6,7 @@
 - **Results sent elsewhere**: a scan that prints nothing on stdout, as with `--skip-stdout-results`, is an error that says why, instead of "No unused code found". With an outskirts newer than 3.24.0, the scan passes `--no-skip-stdout-results` so that `skip_stdout_results` in the configuration file does not hide the results.
 - **All projects**: the scan stays running from one project to the next, so the Cancel button and the status bar no longer flicker between them; an outskirts stopped by a signal is reported as "stopped by signal SIGKILL", not "exited with status null".
 - **Error messages**: a project folder that no longer exists is reported as such, not as "executable not found".
+- **Output channel**: shows the messages of outskirts and the size of the results, no longer the whole JSON of the results.
 
 ## 0.1.0 (2026-11-13)
 
