@@ -59,6 +59,7 @@ jobs:
     needs: package
     if: inputs.open-vsx && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
+    environment: release
     permissions:
       contents: read
       id-token: write
