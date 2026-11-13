@@ -1,0 +1,111 @@
+{
+  "name": "outskirts",
+  "displayName": "outskirts",
+  "description": "Shows the unused Swift code found by the outskirts CLI as diagnostics.",
+  "version": "0.1.0",
+  "publisher": "tiny-earth-moon",
+  "license": "MIT",
+  "icon": "images/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tiny-earth-moon/outskirts-vscode"
+  },
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "categories": [
+    "Linters"
+  ],
+  "keywords": [
+    "swift",
+    "unused code",
+    "dead code"
+  ],
+  "activationEvents": [
+    "workspaceContains:Package.swift",
+    "workspaceContains:*.xcodeproj",
+    "workspaceContains:.outskirts.yml",
+    "workspaceContains:.periphery.yml"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "A scan builds the project, so it only runs in a trusted workspace.",
+      "restrictedConfigurations": [
+        "outskirts.path",
+        "outskirts.arguments"
+      ]
+    }
+  },
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "outskirts.scan",
+        "title": "Scan",
+        "category": "outskirts"
+      },
+      {
+        "command": "outskirts.clear",
+        "title": "Clear Results",
+        "category": "outskirts"
+      }
+    ],
+    "configuration": {
+      "title": "outskirts",
+      "properties": {
+        "outskirts.path": {
+          "type": "string",
+          "default": "outskirts",
+          "scope": "machine",
+          "description": "Path of the outskirts executable, or its name when it is on the PATH."
+        },
+        "outskirts.arguments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "scope": "resource",
+          "description": "Extra arguments passed to `outskirts scan`, e.g. [\"--schemes\", \"App\"]."
+        },
+        "outskirts.severity": {
+          "type": "string",
+          "enum": [
+            "error",
+            "warning",
+            "information",
+            "hint"
+          ],
+          "default": "warning",
+          "scope": "resource",
+          "description": "Severity of the diagnostics reported by outskirts."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run bundle",
+    "bundle": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --target=node20 --minify",
+    "compile": "tsc -p .",
+    "lint": "eslint .",
+    "typecheck": "tsc -p . --noEmit",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "npm run compile && mocha",
+    "test:integration": "npm run compile && npm run bundle && node out/test/integration/runTest.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/mocha": "10.0.10",
+    "@types/node": "20.19.43",
+    "@types/vscode": "1.100.0",
+    "@vscode/test-electron": "3.1.0",
+    "@vscode/vsce": "4.1.1",
+    "esbuild": "0.28.2",
+    "eslint": "10.14.0",
+    "mocha": "12.0.3",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.2"
+  }
+}

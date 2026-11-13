@@ -1,0 +1,23 @@
+[
+  {
+    "accessibility" : "internal",
+    "attributes" : [
+
+    ],
+    "hints" : [
+      "unused"
+    ],
+    "ids" : [
+      "s:4Demo12unusedHelperSiyF"
+    ],
+    "kind" : "function.free",
+    "location" : "Sources/Demo/main.swift:3:6",
+    "modifiers" : [
+
+    ],
+    "modules" : [
+      "Demo"
+    ],
+    "name" : "unusedHelper()"
+  }
+]

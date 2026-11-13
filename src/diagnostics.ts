@@ -1,0 +1,38 @@
+import * as vscode from "vscode";
+import { Finding } from "./findings";
+
+const severities: Partial<Record<string, vscode.DiagnosticSeverity>> = {
+  error: vscode.DiagnosticSeverity.Error,
+  warning: vscode.DiagnosticSeverity.Warning,
+  information: vscode.DiagnosticSeverity.Information,
+  hint: vscode.DiagnosticSeverity.Hint,
+};
+
+export function severityFromSetting(value: string): vscode.DiagnosticSeverity {
+  const severity = severities[value];
+  if (severity === undefined) {
+    throw new Error(`Invalid value '${value}' for the setting outskirts.severity.`);
+  }
+  return severity;
+}
+
+export function showFindings(
+  collection: vscode.DiagnosticCollection,
+  findings: Finding[],
+  severity: vscode.DiagnosticSeverity,
+): void {
+  const byFile = new Map<string, vscode.Diagnostic[]>();
+  for (const finding of findings) {
+    const position = new vscode.Position(finding.line, finding.column);
+    const diagnostic = new vscode.Diagnostic(new vscode.Range(position, position), finding.message, severity);
+    diagnostic.source = "outskirts";
+    if (finding.code !== undefined) {
+      diagnostic.code = finding.code;
+    }
+    const list = byFile.get(finding.file) ?? [];
+    list.push(diagnostic);
+    byFile.set(finding.file, list);
+  }
+  collection.clear();
+  collection.set([...byFile].map(([file, list]) => [vscode.Uri.file(file), list]));
+}

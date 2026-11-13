@@ -1,0 +1,4 @@
+#!/usr/bin/env node
+const { readFileSync } = require("node:fs");
+const path = require("node:path");
+process.stdout.write(readFileSync(path.join(__dirname, "..", "fixtures", "scan.json"), "utf8"));
