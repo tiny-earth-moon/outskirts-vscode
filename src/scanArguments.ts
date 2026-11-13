@@ -1,3 +1,3 @@
-export function buildScanArguments(extra: readonly string[]): string[] {
-  return ["scan", "--format", "json", "--quiet", ...extra];
+export function buildScanArguments(extra: readonly string[], skipBuild = false): string[] {
+  return ["scan", "--format", "json", "--quiet", ...(skipBuild ? ["--skip-build"] : []), ...extra];
 }
