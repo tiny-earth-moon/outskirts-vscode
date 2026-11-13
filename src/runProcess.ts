@@ -1,9 +1,16 @@
 import { spawn } from "node:child_process";
+import { statSync } from "node:fs";
 import { ProcessRun } from "./outcome";
 
 export class ExecutableNotFoundError extends Error {
   constructor(readonly executable: string) {
     super(`The outskirts executable '${executable}' was not found.`);
+  }
+}
+
+export class WorkingDirectoryNotFoundError extends Error {
+  constructor(readonly cwd: string) {
+    super(`The folder '${cwd}' to scan in does not exist.`);
   }
 }
 
@@ -13,6 +20,14 @@ export interface RunOptions {
   cwd: string;
   signal: AbortSignal;
   onOutput: (text: string) => void;
+}
+
+export function isDirectory(path: string): boolean {
+  try {
+    return statSync(path).isDirectory();
+  } catch {
+    return false;
+  }
 }
 
 export function runProcess(executable: string, args: string[], options: RunOptions): Promise<ProcessRun> {
@@ -31,7 +46,7 @@ export function runProcess(executable: string, args: string[], options: RunOptio
       if (error.name === "AbortError") {
         reject(new CancelledError("The scan was cancelled."));
       } else if (error.code === "ENOENT") {
-        reject(new ExecutableNotFoundError(executable));
+        reject(isDirectory(options.cwd) ? new ExecutableNotFoundError(executable) : new WorkingDirectoryNotFoundError(options.cwd));
       } else {
         reject(error);
       }
