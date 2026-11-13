@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { agentVerify } from "./agentVerify";
 import { AgentStatus } from "./agentStatus";
 import { resolveExecutable } from "./executable";
 import { ExecutableVersion, OptionRow, optionRows } from "./optionsModel";
@@ -41,6 +42,7 @@ export class OptionsTreeProvider implements vscode.TreeDataProvider<OptionRow> {
       executable: executableName(),
       version: this.version,
       agent: this.agent(),
+      agentVerify: agentVerify(),
     });
   }
 

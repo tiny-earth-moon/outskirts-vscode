@@ -8,6 +8,7 @@ import { launchInTerminal } from "./agentTerminal";
 import { TreeNode } from "./folderTree";
 import { pickOneProject } from "./pickFolder";
 import { ProjectList } from "./projectList";
+import { agentVerify } from "./agentVerify";
 import { ResultsStore } from "./resultsStore";
 import { freshFindings, staleScopeMessage } from "./staleModel";
 
@@ -53,7 +54,7 @@ export function registerFixWithAgent(store: ResultsStore, projects: ProjectList,
       }
     }
     const root = project.uri.fsPath;
-    const prompt = fitPrompt({ projectName: project.name, root, findings });
+    const prompt = fitPrompt({ projectName: project.name, root, findings, verify: agentVerify() });
     launchInTerminal(launchRequest(status.agent, status.executable, prompt, root));
   };
   return [

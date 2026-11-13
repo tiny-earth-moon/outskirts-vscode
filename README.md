@@ -36,6 +36,7 @@ Below the results, the collapsible **Scan Options** section shows the options of
 - **Group results**: click to switch between grouping by file and by kind.
 - **Executable**: the executable and its version, or "not found"; click to open the settings.
 - **Agent**: the coding agent that Fix with Agent starts, "not set", or "(not installed)"; click to choose it.
+- **Agent verifies by building**: a checkbox (user setting `outskirts.agentVerify`, off by default) that lets the agent build the project or run its tests after its changes; off, it only searches the code for remaining uses and ends with the command to run to verify.
 
 Its title bar has buttons to scan the project with these options and to open the settings. With several projects, the view names the project it shows, follows the project last scanned or selected in the results, and has a button to select another project.
 
@@ -43,7 +44,7 @@ Its title bar has buttons to scan the project with these options and to open the
 
 **Fix with Agent** starts a coding agent of your choice in a terminal, in the project directory, with a prompt that asks it to remove the unused code that outskirts found. The button is on each project, file and result of the Results view (it sends the results of that project, that file, or that single result), and in the title bar of the view and the command palette, where it takes the project with results, or asks which one.
 
-The prompt is built from the results of the last scan, without scanning again. It tells the agent to change nothing else, to keep and report a declaration that turns out to be used (dynamically, from another target, by Interface Builder…), to apply the minimal change that a hint such as redundant accessibility names, not to edit generated files, to build or run the tests if there is a quick way to, and to end with a summary of what it removed and kept. Then it lists the results by file, with paths relative to the project directory, one line per result: `line:column  kind name — hint`. At most 200 results are listed, fewer if the prompt would exceed 100 000 bytes; the prompt says how many were left out.
+The prompt is built from the results of the last scan, without scanning again. It tells the agent to change nothing else, to keep and report a declaration that turns out to be used (dynamically, from another target, by Interface Builder…), to apply the minimal change that a hint such as redundant accessibility names, not to edit generated files, and not to build or run the tests but to check each removal by searching the code, ending with a summary of what it removed and kept and the command to run to verify; with `outskirts.agentVerify` on, it builds or runs the tests instead if there is a quick way to. Then it lists the results by file, with paths relative to the project directory, one line per result: `line:column  kind name — hint`. At most 200 results are listed, fewer if the prompt would exceed 100 000 bytes; the prompt says how many were left out.
 
 The agent edits the files; review its changes as you would any other. Nothing reads the agent's output: when it is done, scan again by hand to see what is left.
 
@@ -81,8 +82,9 @@ Settings are stored per workspace folder, so the projects found in the same fold
 | `outskirts.severity` | `warning` | `error`, `warning`, `information` or `hint`. |
 | `outskirts.agent` | empty | Agent started by Fix with Agent: `claude`, `copilot`, `codex`, `gemini`, `cursor`, or `custom`; empty asks. |
 | `outskirts.agentCommand` | `[]` | Command of the custom agent, with `${prompt}` as one whole argument. |
+| `outskirts.agentVerify` | `false` | Lets the agent build the project or run its tests after its changes. |
 
-A scan builds the project and an agent edits it, so both only run in a trusted workspace, and `outskirts.path`, `outskirts.agent` and `outskirts.agentCommand` are read from user or machine settings only, never from a workspace.
+A scan builds the project and an agent edits it, so both only run in a trusted workspace, and `outskirts.path`, `outskirts.agent`, `outskirts.agentCommand` and `outskirts.agentVerify` are read from user or machine settings only, never from a workspace.
 
 ## Known limits
 

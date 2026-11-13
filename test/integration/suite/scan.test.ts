@@ -67,8 +67,8 @@ describe("outskirts.scan", () => {
     await options.probed();
     const rows = options.tree.getChildren();
     const items = rows.map((row) => options.tree.getTreeItem(row));
-    assert.deepEqual(items.map((item) => item.label), ["Reuse existing index", "Severity", "Extra arguments", "Group results", "Executable", "Agent"]);
-    assert.deepEqual(items.map((item) => item.description), ["--skip-build", "warning", "none", "by file", `${fake} 3.24.0`, "not set"]);
+    assert.deepEqual(items.map((item) => item.label), ["Reuse existing index", "Severity", "Extra arguments", "Group results", "Executable", "Agent", "Agent verifies by building"]);
+    assert.deepEqual(items.map((item) => item.description), ["--skip-build", "warning", "none", "by file", `${fake} 3.24.0`, "not set", ""]);
     assert.equal(items[0].checkboxState, vscode.TreeItemCheckboxState.Unchecked);
 
     const [folder] = vscode.workspace.workspaceFolders ?? [];

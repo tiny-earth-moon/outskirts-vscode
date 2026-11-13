@@ -15,6 +15,13 @@ describe("buildPrompt", () => {
     finding("/work/App/A.swift", 0, "count", "assignOnlyProperty", "property"),
   ];
 
+  it("lets the agent build or run the tests only when asked", () => {
+    const prompt = buildPrompt({ projectName: "App", root, findings, verify: true });
+    assert.match(prompt, /- Afterwards, build the project or run its tests if there is a quick way to do so\./);
+    assert.match(prompt, /- End with a summary of what you removed and what you kept, and why\./);
+    assert.doesNotMatch(prompt, /Do not build/);
+  });
+
   it("starts with the instructions, then lists the results by file with relative paths", () => {
     const prompt = buildPrompt({ projectName: "App", root, findings });
     assert.match(prompt, /^Remove the unused Swift code listed below, found by outskirts in the project App\.\n/);
@@ -22,8 +29,9 @@ describe("buildPrompt", () => {
     assert.match(prompt, /keep it and report it instead of removing it/);
     assert.match(prompt, /minimal change the hint names/);
     assert.match(prompt, /- Do not edit generated files\./);
-    assert.match(prompt, /run its tests/);
-    assert.match(prompt, /summary of what you removed and what you kept/);
+    assert.match(prompt, /- Do not build the project or run its tests\. Check each removal by searching the code for remaining uses/);
+    assert.match(prompt, /the command to run to verify\./);
+    assert.doesNotMatch(prompt, /Afterwards, build/);
     const list = prompt.slice(prompt.indexOf("Results by file"));
     assert.equal(
       list,
