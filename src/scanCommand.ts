@@ -6,6 +6,7 @@ import { pickFolder } from "./pickFolder";
 import { CancelledError, ExecutableNotFoundError, runProcess } from "./runProcess";
 import { buildScanArguments } from "./scanArguments";
 import { resolveExecutable } from "./executable";
+import { scanSummary } from "./summary";
 
 const installHint = "Install it with `brew install tiny-earth-moon/tap/outskirts` or set `outskirts.path`.";
 
@@ -40,9 +41,21 @@ export async function scan(collection: vscode.DiagnosticCollection, output: vsco
     output.appendLine(`outskirts exited with status ${String(run.exitCode)}.`);
     const findings = toFindings(interpretRun(run), cwd);
     showFindings(collection, findings, severity);
-    void vscode.window.setStatusBarMessage(`outskirts: ${String(findings.length)} result(s)`, 5000);
+    void announce(findings.length);
   } catch (error) {
     await report(error, output);
+  }
+}
+
+async function announce(count: number): Promise<void> {
+  if (count === 0) {
+    void vscode.window.showInformationMessage(scanSummary(count));
+    return;
+  }
+  const showProblems = "Show Problems";
+  const choice = await vscode.window.showInformationMessage(scanSummary(count), showProblems);
+  if (choice === showProblems) {
+    await vscode.commands.executeCommand("workbench.actions.view.problems");
   }
 }
 
