@@ -13,7 +13,7 @@ outskirts installed, e.g. `brew install tiny-earth-moon/tap/outskirts`, and a pr
 - **outskirts: Scan** scans the workspace folder and replaces its previous results; with several folders it asks which one, or all of them. The scan can be cancelled from its notification; when it ends, a message gives the number of results and names the folder.
 - **outskirts: Cancel Scan** stops the running scan. Only one scan runs at a time.
 - **outskirts: Clear Results** removes the results of every folder.
-- **outskirts: Scan Options…** toggles reusing the existing index, sets the severity and edits the extra arguments of a workspace folder. Arguments are quoted like in a shell, but no shell is used.
+- **outskirts: Show Scan Options** opens the Scan Options view of the side bar; with several folders it first asks which folder to show.
 - **outskirts: Group by File** / **Group by Kind** change how the side bar groups the results.
 - **outskirts: Open Settings** shows the settings of the extension.
 
@@ -21,7 +21,17 @@ The output of outskirts is written to the "outskirts" output channel.
 
 ## Side bar
 
-The outskirts icon in the activity bar opens the results, grouped by file or by kind of finding with their counts; clicking a result opens its location. The title bar of the view has buttons to scan, cancel, change the options, switch the grouping, clear the results and open the settings. After a scan, the status bar shows the number of results; clicking it shows the view.
+The outskirts icon in the activity bar opens the results, grouped by file or by kind of finding with their counts; clicking a result opens its location. The title bar of the view has buttons to scan, cancel, show the options, switch the grouping, clear the results and open the settings. After a scan, the status bar shows the number of results; clicking it shows the view.
+
+Below the results, the collapsible **Scan Options** section shows the options of a workspace folder with their current values:
+
+- **Reuse existing index**: a checkbox that scans without building, on the index of the last build (`--skip-build`).
+- **Severity**: click to pick the severity of the diagnostics.
+- **Extra arguments**: click to edit them, quoted like in a shell; no shell is used.
+- **Group results**: click to switch between grouping by file and by kind.
+- **outskirts**: the executable and its version, or "not found"; click to open the settings.
+
+Its title bar has buttons to scan the folder with these options and to open the settings. With several folders, the view names the folder it shows, follows the folder last scanned or selected in the results, and has a button to select another folder.
 
 ## Several folders
 
