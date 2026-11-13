@@ -46,6 +46,16 @@ export class ResultsStore {
     return true;
   }
 
+  setSeverity(folder: string, severity: string): boolean {
+    const entry = this.entries.get(folder);
+    if (entry === undefined || entry.severity === severity) {
+      return false;
+    }
+    this.entries.set(folder, { ...entry, severity });
+    this.notify();
+    return true;
+  }
+
   markStale(folder: string, file: string): boolean {
     const entry = this.entries.get(folder);
     if (entry === undefined || entry.stale.has(file) || !entry.findings.some((finding) => finding.file === file)) {

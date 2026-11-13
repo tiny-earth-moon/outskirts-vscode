@@ -54,6 +54,19 @@ describe("ResultsStore", () => {
     assert.equal(store.total, 2);
   });
 
+  it("changes the severity of the results already shown, without a new scan", () => {
+    const store = new ResultsStore();
+    let changes = 0;
+    store.onDidChange(() => changes++);
+    store.set("a", [finding], "warning", 1);
+    store.markStale("a", finding.file);
+    assert.equal(store.setSeverity("a", "error"), true);
+    assert.equal(store.setSeverity("a", "error"), false);
+    assert.equal(store.setSeverity("b", "error"), false);
+    assert.deepEqual(store.get("a"), { findings: [finding], severity: "error", scannedAt: 1, stale: new Set([finding.file]) });
+    assert.equal(changes, 3);
+  });
+
   it("derives the state of a folder", () => {
     assert.equal(resultsState(undefined), "none");
     assert.equal(resultsState({ findings: [], severity: "warning", scannedAt: 0, stale: new Set<string>() }), "empty");

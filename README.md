@@ -31,7 +31,7 @@ When a file with results changes after the scan, in the editor or on disk (for e
 Below the results, the collapsible **Scan Options** section shows the options of a project with their current values:
 
 - **Reuse existing index**: a checkbox that scans without building, on the index of the last build (`--skip-build`).
-- **Severity**: click to pick the severity of the diagnostics.
+- **Severity**: click to pick the severity of the diagnostics; the diagnostics already shown follow it.
 - **Extra arguments**: click to edit them, quoted like in a shell; no shell is used.
 - **Group results**: click to switch between grouping by file and by kind.
 - **Executable**: the executable and its version, or "not found"; click to open the settings.
