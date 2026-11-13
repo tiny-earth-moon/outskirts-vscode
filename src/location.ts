@@ -24,6 +24,29 @@ export function parseLocation(location: string, folder: string, aliases: readonl
   };
 }
 
+export function isRelativeLocation(location: string): boolean {
+  const file = /^(.+):\d+:\d+$/.exec(location)?.[1];
+  return file !== undefined && !path.isAbsolute(file);
+}
+
+export function relativeResultsBase(folder: string, extra: readonly string[]): string {
+  const projectRoot = path.resolve(folder, lastOption(extra, "--project-root") ?? ".");
+  return path.resolve(projectRoot, lastOption(extra, "--relative-to") ?? ".");
+}
+
+function lastOption(extra: readonly string[], name: string): string | undefined {
+  let value: string | undefined;
+  for (let index = 0; index < extra.length && extra[index] !== "--"; index++) {
+    const argument = extra[index];
+    if (argument === name && index + 1 < extra.length) {
+      value = extra[++index];
+    } else if (argument.startsWith(`${name}=`)) {
+      value = argument.slice(name.length + 1);
+    }
+  }
+  return value;
+}
+
 export function shownPath(file: string, aliases: readonly FolderAlias[]): string {
   for (const alias of [...aliases].sort((a, b) => b.real.length - a.real.length)) {
     if (file === alias.real) {

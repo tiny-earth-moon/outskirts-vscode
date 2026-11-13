@@ -3,10 +3,19 @@ export function parseVersion(stdout: string): string | undefined {
 }
 
 export function printsResultsWhenAsked(version: string): boolean {
+  return isAtLeast(version, [3, 24, 1]);
+}
+
+export function printsAbsolutePathsWhenAsked(version: string): boolean {
+  return isAtLeast(version, [3, 13, 3]);
+}
+
+function isAtLeast(version: string, minimum: readonly [number, number, number]): boolean {
   const core = /^\d+\.\d+(?:\.\d+)?/.exec(version)?.[0];
   if (core === undefined) {
     return false;
   }
   const [major = 0, minor = 0, patch = 0] = core.split(".").map(Number);
-  return major > 3 || (major === 3 && (minor > 24 || (minor === 24 && patch > 0)));
+  const [wantedMajor, wantedMinor, wantedPatch] = minimum;
+  return major !== wantedMajor ? major > wantedMajor : minor !== wantedMinor ? minor > wantedMinor : patch >= wantedPatch;
 }

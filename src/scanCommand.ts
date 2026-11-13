@@ -13,7 +13,9 @@ import { projectArguments, readProjectFolder } from "./xcodeProject";
 import { ScanState } from "./scanState";
 import { probeVersion } from "./versionProbe";
 import { folderAliases } from "./realFolders";
-import { printsResultsWhenAsked } from "./version";
+import { printsAbsolutePathsWhenAsked, printsResultsWhenAsked } from "./version";
+import { relativeResultsBase } from "./location";
+import { checkRelativeLocations } from "./relativeResults";
 
 export class Scanner {
   private controller: AbortController | undefined;
@@ -105,6 +107,7 @@ export class Scanner {
       skipBuild: config.get<boolean>("skipBuild", false),
       project: projectArguments(await readProjectFolder(cwd), extra),
       printResults: version.state === "found" && printsResultsWhenAsked(version.version),
+      absolutePaths: version.state === "found" && printsAbsolutePathsWhenAsked(version.version),
     });
     const severity = config.get<string>("severity", "warning");
     severityFromSetting(severity);
@@ -122,8 +125,11 @@ export class Scanner {
       },
     );
     this.output.appendLine(exitDescription(run));
+    const results = interpretRun(run);
+    const base = relativeResultsBase(cwd, extra);
+    await checkRelativeLocations(results, base);
     const aliases = await folderAliases([cwd, project.workspaceFolder.uri.fsPath]);
-    const findings = toFindings(interpretRun(run), cwd, aliases);
+    const findings = toFindings(results, base, aliases);
     this.store.set(project.key, findings, severity, Date.now());
     return findings.length;
   }

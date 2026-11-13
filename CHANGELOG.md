@@ -17,6 +17,7 @@
 - **Activation**: the extension starts with a workspace that holds an Xcode project or workspace by looking for the file inside it (`project.pbxproj`, `contents.xcworkspacedata`), since `workspaceContains` matches its glob patterns against files only and an Xcode project or workspace is a folder.
 - **Dependency directories**: `Pods`, `Carthage`, `vendor`, `Vendor` and `SourcePackages` are no longer offered as projects, like `node_modules`, `build` and `DerivedData` already.
 - **Symbolic links**: a project opened through a symbolic link, or under `/tmp` which macOS resolves to `/private/tmp`, has its diagnostics on the files open in the editor, and editing them marks their results stale: the real paths that outskirts prints are shown under the path the project is opened at.
+- **Relative result paths**: with outskirts 3.13.3 or newer, the scan passes `--no-relative-results`, so that `relative_results` in the configuration file no longer sends the results to wrong locations. `--relative-results` in Extra arguments still works: its paths are resolved against `--relative-to` and `--project-root` when they are given there, and a path that does not exist under that base is reported as an error instead of a result in a missing file.
 
 ## 0.1.0 (2026-11-13)
 

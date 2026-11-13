@@ -2,6 +2,7 @@ export interface ScanOptions {
   skipBuild?: boolean;
   project?: readonly string[];
   printResults?: boolean;
+  absolutePaths?: boolean;
 }
 
 export function buildScanArguments(extra: readonly string[], options: ScanOptions = {}): string[] {
@@ -13,6 +14,7 @@ export function buildScanArguments(extra: readonly string[], options: ScanOption
     ...(options.skipBuild === true ? ["--skip-build"] : []),
     ...(options.project ?? []),
     ...(options.printResults === true ? ["--no-skip-stdout-results"] : []),
+    ...(options.absolutePaths === true ? ["--no-relative-results"] : []),
     ...extra,
   ];
 }

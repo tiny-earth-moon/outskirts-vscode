@@ -2,7 +2,7 @@
 
 Shows the unused Swift code found by [outskirts](https://github.com/tiny-earth-moon/outskirts) in a side bar, in the editor and in the Problems panel, for each project of the workspace, and can hand the results to a coding agent.
 
-The extension does not analyze Swift itself: it runs the installed `outskirts` executable with `scan --format json --quiet` in the project directory and shows each result at its location. With an outskirts newer than 3.24.0, it also passes `--no-skip-stdout-results`, so that `skip_stdout_results` in the configuration file does not keep the results from it. A scan that prints nothing, not even `[]`, is reported as an error, never as "no unused code". outskirts prints real paths; when the project is reached through a symbolic link, they are shown under the path it is opened at.
+The extension does not analyze Swift itself: it runs the installed `outskirts` executable with `scan --format json --quiet` in the project directory and shows each result at its location. With an outskirts newer than 3.24.0, it also passes `--no-skip-stdout-results`, so that `skip_stdout_results` in the configuration file does not keep the results from it. A scan that prints nothing, not even `[]`, is reported as an error, never as "no unused code". With outskirts 3.13.3 or newer, it passes `--no-relative-results` so that the result paths are absolute; with `--relative-results` in Extra arguments, they are resolved against the `--relative-to` and `--project-root` given there, and a scan whose paths do not exist under that base is reported as an error. outskirts prints real paths; when the project is reached through a symbolic link, they are shown under the path it is opened at.
 
 ## Requirements
 
