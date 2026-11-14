@@ -3,6 +3,7 @@ import { agentVerify } from "./agentVerify";
 import { AgentStatus } from "./agentStatus";
 import { resolveExecutable } from "./executable";
 import { ExecutableVersion, OptionRow, optionRows } from "./optionsModel";
+import { parseSeverityByKind, severityDescription } from "./severityByKind";
 import { GroupBy } from "./treeModel";
 
 const commands: Partial<Record<OptionRow["id"], string>> = {
@@ -38,7 +39,7 @@ export class OptionsTreeProvider implements vscode.TreeDataProvider<OptionRow> {
     const config = vscode.workspace.getConfiguration("outskirts", folder.uri);
     return optionRows({
       skipBuild: config.get<boolean>("skipBuild", false),
-      severity: config.get<string>("severity", "warning"),
+      severity: severityDescription(config.get<string>("severity", "warning"), parseSeverityByKind(config.get<unknown>("severityByKind"))),
       arguments: config.get<string[]>("arguments", []),
       groupBy: this.groupBy(),
       executable: executableName(),

@@ -4,7 +4,7 @@ import { AgentRegistry } from "./agentRegistry";
 import { newSinceBaselineText } from "./baseline";
 import { registerBaselineCommands } from "./baselineCommands";
 import { registerConfigEditor } from "./configEditor";
-import { bindDiagnostics, followSeverity } from "./diagnostics";
+import { bindDiagnostics, followSeverity, severityOverrides } from "./diagnostics";
 import { FolderNode, viewState } from "./folderModel";
 import { registerFixWithAgent } from "./fixWithAgent";
 import { isFolderNode } from "./folderTree";
@@ -92,7 +92,15 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
     },
   );
   const rowProject = (row: ProjectRow | undefined): Project | undefined => (row === undefined ? undefined : projects.find(row.key));
-  setContext("groupBy", tree.groupBy);
+  const loggedSeverity = new Set<string>();
+  const logSeverityOnce = (message: string): void => {
+    if (!loggedSeverity.has(message)) {
+      loggedSeverity.add(message);
+      output.appendLine(message);
+    }
+  };
+  const diagnostics = bindDiagnostics(collection, store, (key) => severityOverrides(projects.find(key)?.workspaceFolder.uri, logSeverityOnce));
+  groupBy(initialGroupBy());
   const ready = projects.refresh();
   context.subscriptions.push(
     collection,
@@ -101,11 +109,19 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
     tree,
     projects,
     statusBar,
-    bindDiagnostics(collection, store),
-    followSeverity(store, () => projects.projects),
+    diagnostics,
+    followSeverity(store, () => projects.projects, () => {
+      diagnostics.render();
+      options.refresh();
+    }),
     watchStaleFiles(store, (key) => projects.find(key)?.uri.fsPath),
     watchSaves(store, scanner, (key) => projects.find(key), (uri) => projects.containing(uri)),
     store.onDidChange(updateState),
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration("outskirts.groupBy")) {
+        groupBy(initialGroupBy());
+      }
+    }),
     projects.onDidChange(() => {
       store.retain(projects.infos.map((folder) => folder.key));
       scanner.cancelRemoved((key) => projects.find(key) !== undefined);
@@ -208,3 +224,7 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
 }
 
 export function deactivate(): void {}
+
+function initialGroupBy(): GroupBy {
+  return vscode.workspace.getConfiguration("outskirts").get<string>("groupBy") === "kind" ? "kind" : "file";
+}
