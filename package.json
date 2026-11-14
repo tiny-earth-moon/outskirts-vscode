@@ -477,5 +477,8 @@
   "overrides": {
     "minimatch": "11.0.8",
     "glob": "14.0.2"
+  },
+  "dependencies": {
+    "yaml": "2.9.1"
   }
 }
