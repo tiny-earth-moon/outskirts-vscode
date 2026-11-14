@@ -156,6 +156,12 @@
         "title": "Select Agent",
         "category": "outskirts",
         "icon": "$(sparkle)"
+      },
+      {
+        "command": "outskirts.editConfiguration",
+        "title": "Edit Configuration",
+        "category": "outskirts",
+        "icon": "$(file-code)"
       }
     ],
     "configuration": {
@@ -413,6 +419,10 @@
         {
           "command": "outskirts.pickAgent",
           "when": "outskirts.state != unavailable"
+        },
+        {
+          "command": "outskirts.editConfiguration",
+          "when": "outskirts.state != unavailable"
         }
       ],
       "view/item/context": [
@@ -451,10 +461,10 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run bundle",
-    "bundle": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --target=node20 --minify",
+    "bundle": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --target=node20 --minify && esbuild webview/configEditor.ts webview/configEditor.css --bundle --outdir=dist --format=iife --platform=browser --target=es2022 --minify",
     "compile": "tsc -p .",
     "lint": "eslint .",
-    "typecheck": "tsc -p . --noEmit",
+    "typecheck": "tsc -p . --noEmit && tsc -p webview --noEmit",
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "npm run compile && mocha",
     "test:integration": "npm run compile && npm run bundle && node out/test/integration/runTest.js",

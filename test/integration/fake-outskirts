@@ -1,8 +1,22 @@
 #!/usr/bin/env node
 const { readFileSync } = require("node:fs");
 const path = require("node:path");
-if (process.argv[2] === "version") {
+const fixtures = path.join(__dirname, "..", "fixtures");
+const [command, subcommand] = process.argv.slice(2);
+if (command === "version") {
   process.stdout.write("3.24.0\n");
+} else if (command === "config" && subcommand === "schema") {
+  process.stdout.write(readFileSync(path.join(fixtures, "config-schema.json"), "utf8"));
+} else if (command === "config" && subcommand === "check") {
+  const args = process.argv.slice(4);
+  const file = args[args.indexOf("--config") + 1] ?? ".outskirts.yml";
+  const root = args[args.indexOf("--project-root") + 1] ?? process.cwd();
+  const text = readFileSync(path.resolve(root, file), "utf8");
+  if (/^unknown_key:/m.test(text)) {
+    process.stderr.write(`warning: ${file}: invalid key 'unknown_key'\nerror: ${file}: 1 problem found\n`);
+    process.exit(1);
+  }
+  process.stdout.write(`${file}: ok\n`);
 } else {
-  process.stdout.write(readFileSync(path.join(__dirname, "..", "fixtures", "scan.json"), "utf8"));
+  process.stdout.write(readFileSync(path.join(fixtures, "scan.json"), "utf8"));
 }

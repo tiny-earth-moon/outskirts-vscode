@@ -1,5 +1,7 @@
 **
 !dist/extension.js
+!dist/configEditor.js
+!dist/configEditor.css
 !images/icon.png
 !images/activity.svg
 !package.json

@@ -8,6 +8,7 @@ import { GroupBy } from "./treeModel";
 const commands: Partial<Record<OptionRow["id"], string>> = {
   severity: "outskirts.editSeverity",
   arguments: "outskirts.editArguments",
+  configuration: "outskirts.editConfiguration",
   groupBy: "outskirts.toggleGroupBy",
   executable: "outskirts.openSettings",
   agent: "outskirts.pickAgent",
@@ -22,6 +23,7 @@ export class OptionsTreeProvider implements vscode.TreeDataProvider<OptionRow> {
     private readonly folder: () => vscode.WorkspaceFolder | undefined,
     private readonly groupBy: () => GroupBy,
     private readonly agent: () => AgentStatus,
+    private readonly project: () => vscode.Uri | undefined = () => undefined,
   ) {}
 
   refresh(): void {
@@ -57,7 +59,8 @@ export class OptionsTreeProvider implements vscode.TreeDataProvider<OptionRow> {
     }
     const command = commands[row.id];
     if (command !== undefined) {
-      item.command = { command, title: row.label };
+      const project = row.id === "configuration" ? this.project() : undefined;
+      item.command = { command, title: row.label, arguments: project === undefined ? [] : [project] };
     }
     return item;
   }

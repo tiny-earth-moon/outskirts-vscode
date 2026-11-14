@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { AgentRegistry } from "./agentRegistry";
+import { registerConfigEditor } from "./configEditor";
 import { bindDiagnostics, followSeverity } from "./diagnostics";
 import { FolderNode, viewState } from "./folderModel";
 import { registerFixWithAgent } from "./fixWithAgent";
@@ -96,6 +97,7 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
     options,
     agents,
     ...registerFixWithAgent(store, projects, agents),
+    registerConfigEditor(context.extensionUri, projects, context.workspaceState),
     resultsView,
     resultsView.onDidChangeSelection((event) => {
       const node = event.selection.at(0);

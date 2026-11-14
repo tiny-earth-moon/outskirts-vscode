@@ -4,6 +4,7 @@ import * as path from "node:path";
 import * as vscode from "vscode";
 import type { ResultGroup } from "../../../src/treeModel";
 import { activateWithFake, root } from "./activate";
+import { describeConfigEditor } from "./configEditor";
 import { describeFixWithAgent } from "./fixWithAgent";
 
 const fake = path.join(root, "test/integration/fake-outskirts");
@@ -67,8 +68,8 @@ describe("outskirts.scan", () => {
     await options.probed();
     const rows = options.tree.getChildren();
     const items = rows.map((row) => options.tree.getTreeItem(row));
-    assert.deepEqual(items.map((item) => item.label), ["Reuse existing index", "Severity", "Extra arguments", "Group results", "Executable", "Agent", "Agent verifies by building"]);
-    assert.deepEqual(items.map((item) => item.description), ["--skip-build", "warning", "none", "by file", `${fake} 3.24.0`, "not set", ""]);
+    assert.deepEqual(items.map((item) => item.label), ["Reuse existing index", "Severity", "Extra arguments", "Group results", "Executable", "Agent", "Agent verifies by building", "Configuration…"]);
+    assert.deepEqual(items.map((item) => item.description), ["--skip-build", "warning", "none", "by file", `${fake} 3.24.0`, "not set", "", ".outskirts.yml"]);
     assert.equal(items[0].checkboxState, vscode.TreeItemCheckboxState.Unchecked);
 
     const [folder] = vscode.workspace.workspaceFolders ?? [];
@@ -96,3 +97,4 @@ async function waitFor(condition: () => boolean, timeout = 10_000): Promise<void
 }
 
 describeFixWithAgent();
+describeConfigEditor();
