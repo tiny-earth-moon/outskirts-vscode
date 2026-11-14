@@ -76,6 +76,17 @@
         "icon": "$(gear)"
       },
       {
+        "command": "outskirts.acceptBaseline",
+        "title": "Accept Current Results as Baseline",
+        "category": "outskirts",
+        "icon": "$(pass)"
+      },
+      {
+        "command": "outskirts.clearBaseline",
+        "title": "Clear Baseline",
+        "category": "outskirts"
+      },
+      {
         "command": "outskirts.revealProject",
         "title": "Show Project Results",
         "category": "outskirts"
@@ -554,6 +565,16 @@
           "command": "outskirts.openConfiguration",
           "when": "view == outskirts.projects && viewItem =~ /^project/",
           "group": "inline@3"
+        },
+        {
+          "command": "outskirts.acceptBaseline",
+          "when": "view == outskirts.projects && viewItem =~ /^project\\.idle/ && !outskirts.scanning",
+          "group": "baseline@1"
+        },
+        {
+          "command": "outskirts.clearBaseline",
+          "when": "view == outskirts.projects && viewItem =~ /^project\\.idle/ && !outskirts.scanning",
+          "group": "baseline@2"
         },
         {
           "command": "outskirts.scanFolder",

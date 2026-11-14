@@ -16,6 +16,7 @@ export class ProjectsTreeProvider implements vscode.TreeDataProvider<ProjectRow>
     private readonly projects: () => readonly Project[],
     private readonly scanning: () => string | undefined,
     private readonly failed: () => ReadonlySet<string>,
+    private readonly baselined: () => ReadonlySet<string> = () => new Set(),
   ) {}
 
   refresh(): void {
@@ -33,7 +34,7 @@ export class ProjectsTreeProvider implements vscode.TreeDataProvider<ProjectRow>
       relativePath: relativePath(project, several),
       kind: project.kind ?? "generic",
     }));
-    return projectRows(sources, { results: this.store.all(), scanning: this.scanning(), failed: this.failed() });
+    return projectRows(sources, { results: this.store.all(), scanning: this.scanning(), failed: this.failed(), baselined: this.baselined() });
   }
 
   getTreeItem(row: ProjectRow): vscode.TreeItem {

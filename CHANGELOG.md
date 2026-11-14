@@ -4,6 +4,7 @@
 
 - **Results filter**: **Filter…** in the title bar of Results picks the kinds of results to show, with their counts (unused declarations by declaration kind), and a text to match in names and paths; the view description shows "Filtered: 12 of 40", the filter is kept per workspace across rescans, and **Clear Filter** removes it. The Problems panel still shows every diagnostic.
 - **Update without reload**: when VS Code runs the new version before reloading the window, a missing Projects view no longer stops the whole extension: scans and results keep working, and a message offers to reload the window.
+- **Baseline**: **Accept Current Results as Baseline** records the results of a project in its baseline file (the `baseline` of `.outskirts.yml`, else `.outskirts-baseline.json`) and offers to name it in `.outskirts.yml`, so that later scans show only new results; **Clear Baseline** deletes the file. The Projects view marks a project scanned with a baseline, and the Results view says how many results are new since it.
 
 ## 0.2.0 (2026-11-14)
 

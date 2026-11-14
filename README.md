@@ -47,6 +47,15 @@ Below the results, the collapsible **Scan Options** section shows the options of
 
 Its title bar has buttons to scan the project with these options and to open the settings. With several projects, the view names the project it shows, follows the project last scanned or selected in the results, and has a button to select another project.
 
+## Baseline
+
+To adopt outskirts in a project that already has results, record them as a [baseline](https://github.com/tiny-earth-moon/outskirts/blob/master/docs/baselines.md) and see only the new ones:
+
+- **Accept Current Results as Baseline** (right-click a row of the Projects view, or **outskirts: Accept Current Results as Baseline** from the Command Palette) scans the project with `--write-baseline`, reusing the index (`--skip-build`) once the project has been scanned. The file is the `baseline` of `.outskirts.yml`, whose entries are kept, or `.outskirts-baseline.json` at the project root; an existing file that the configuration does not name is only replaced after a confirmation. When the configuration does not name it, a notification offers to add `baseline: <file>` to `.outskirts.yml`, keeping its comments; the project is then scanned again, without the accepted results.
+- **Clear Baseline** deletes that file after a confirmation. The `baseline` key stays in `.outskirts.yml` unless you choose to remove it too; while it stays, scans fail until the file exists again.
+
+A project whose scan uses a baseline (`baseline` in its configuration or `--baseline` in the extra arguments) shows "baseline" in the Projects view, and the Results view says "N new since baseline".
+
 ## Configuration editor
 
 **outskirts: Edit Configuration**, or the **Configuration…** row of Scan Options, opens the `.outskirts.yml` of a project in a form (the file outskirts reads: `.outskirts.yml`, `.outskirts.yaml`, `.periphery.yml` or `.periphery.yaml`, in that order); with several projects it asks which one. The form is built from `outskirts config schema`, so it lists every option of the installed outskirts, with its description and default, and needs an outskirts that prints its schema.

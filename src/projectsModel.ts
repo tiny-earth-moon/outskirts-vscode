@@ -1,5 +1,6 @@
 import { FolderResults } from "./resultsStore";
 import { statusText } from "./summary";
+import { withBaseline } from "./baseline";
 
 export type ProjectKind = "package" | "xcode" | "generic";
 export type ProjectState = "scanning" | "results" | "empty" | "stale" | "notScanned" | "error";
@@ -21,6 +22,7 @@ export interface ProjectsContext {
   results: ReadonlyMap<string, FolderResults>;
   scanning: string | undefined;
   failed: ReadonlySet<string>;
+  baselined?: ReadonlySet<string>;
 }
 
 export function projectKind(entries: readonly string[]): ProjectKind {
@@ -69,7 +71,8 @@ export function projectRows(projects: readonly ProjectSource[], context: Project
     .sort((a, b) => a.relativePath.localeCompare(b.relativePath) || a.name.localeCompare(b.name))
     .map((project) => {
       const state = projectState(project.key, context);
-      const text = stateText(state, context.results.get(project.key));
+      const scanned = state === "results" || state === "empty" || state === "stale";
+      const text = withBaseline(stateText(state, context.results.get(project.key)), scanned && context.baselined?.has(project.key) === true);
       const description = project.relativePath === "" ? text : `${project.relativePath} · ${text}`;
       const cleared = state === "notScanned" || state === "scanning" ? "" : ".results";
       return { ...project, state, description, contextValue: `project.${state === "scanning" ? "scanning" : "idle"}${cleared}` };

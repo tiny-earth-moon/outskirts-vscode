@@ -1,6 +1,8 @@
 import { createOptionalView } from "./optionalView";
 import * as vscode from "vscode";
 import { AgentRegistry } from "./agentRegistry";
+import { newSinceBaselineText } from "./baseline";
+import { registerBaselineCommands } from "./baselineCommands";
 import { registerConfigEditor } from "./configEditor";
 import { bindDiagnostics, followSeverity } from "./diagnostics";
 import { FolderNode, viewState } from "./folderModel";
@@ -56,6 +58,7 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
   const updateState = (): void => {
     setContext("state", viewState(projects.infos, store.all()));
     setContext("hasResults", store.total > 0);
+    resultsView.description = newSinceBaselineText(store.total, [...scanner.baselined].some((key) => store.all().has(key)));
     tree.refresh();
   };
   const target = (node: FolderTarget | undefined): Project | undefined => {
@@ -76,7 +79,7 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
       await scanner.scan(picked);
     }
   };
-  const projectsTree = new ProjectsTreeProvider(store, () => projects.projects, () => scanner.scanning, () => scanner.failed);
+  const projectsTree = new ProjectsTreeProvider(store, () => projects.projects, () => scanner.scanning, () => scanner.failed, () => scanner.baselined);
   const projectsView = createOptionalView(
     () => vscode.window.createTreeView("outskirts.projects", { treeDataProvider: projectsTree }),
     (error) => {
@@ -114,6 +117,7 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
     agents,
     ...registerFixWithAgent(store, projects, agents),
     ...registerIgnoreActions(store),
+    ...registerBaselineCommands(projects, scanner, store),
     registerConfigEditor(context.extensionUri, projects, context.workspaceState),
     resultsView,
     ...registerResultsFilter(tree, store, resultsView, context.workspaceState),
