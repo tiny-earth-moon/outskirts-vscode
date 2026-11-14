@@ -7,6 +7,7 @@ import {
   pendingChanges,
   visibleSections,
 } from "../src/configForm";
+import { draftBannerText } from "../src/configDraft";
 import type { CheckResult, EditorState, HostMessage, ViewMessage, WireValue } from "../src/configMessages";
 import type { Recommendation } from "../src/configRecommendations";
 import type { ConfigOption, OptionValue } from "../src/configSchema";
@@ -34,6 +35,7 @@ let banner: Banner | undefined;
 let filter = { query: "", modifiedOnly: false };
 let saving = false;
 let lastDirty = false;
+let lastDraft = "null";
 let failure: string | undefined;
 
 const parts: {
@@ -119,9 +121,17 @@ function updateStatus(): void {
   if (parts.openYaml !== undefined) {
     parts.openYaml.disabled = state?.fileExists !== true;
   }
-  if (isDirty !== lastDirty) {
+  const pending = changes();
+  const wire: Record<string, WireValue> = {};
+  for (const [key, value] of Object.entries(pending)) {
+    wire[key] = value ?? null;
+  }
+  const draft = Object.keys(wire).length === 0 ? null : wire;
+  const serialized = JSON.stringify(draft);
+  if (serialized !== lastDraft || isDirty !== lastDirty) {
+    lastDraft = serialized;
     lastDirty = isDirty;
-    vscode.postMessage({ type: "dirty", dirty: isDirty });
+    vscode.postMessage({ type: "draft", changes: draft });
   }
 }
 
@@ -560,11 +570,31 @@ function refresh(): void {
   updateStatus();
 }
 
+function discardDraft(): void {
+  if (state === undefined) {
+    return;
+  }
+  banner = undefined;
+  invalid.clear();
+  form = { ...state.saved };
+  refresh();
+}
+
 function adopt(next: EditorState, keepEdits: boolean): void {
   const first = state === undefined;
   const kept = keepEdits ? form : undefined;
   state = next;
   form = kept ?? { ...next.saved };
+  if (!keepEdits && next.draft !== undefined) {
+    for (const [key, value] of Object.entries(next.draft.changes)) {
+      form[key] = value ?? undefined;
+    }
+    banner = {
+      kind: next.draft.changedOnDisk ? "warning" : "info",
+      text: draftBannerText(next.draft, next.file),
+      actions: [{ label: "Discard", run: discardDraft }],
+    };
+  }
   if (!keepEdits) {
     invalid.clear();
   }

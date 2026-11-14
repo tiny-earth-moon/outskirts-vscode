@@ -2,6 +2,7 @@ import { readdir, readFile } from "node:fs/promises";
 import * as path from "node:path";
 import * as vscode from "vscode";
 import { ConfigContents, configFileName, configFileNames, readConfig, schemaComment, updateConfig } from "./configDocument";
+import { Draft, makeDraft, restoreDraft } from "./configDraft";
 import { editorHtml, makeNonce } from "./configEditorHtml";
 import { EditorState, HostMessage, StateReason, ViewMessage, WireValue } from "./configMessages";
 import { ProjectSummary, recommend } from "./configRecommendations";
@@ -15,6 +16,8 @@ import { ProjectList } from "./projectList";
 import { summarizeProject } from "./projectSummary";
 
 const dismissedKey = "outskirts.dismissedRecommendations";
+const draftsKey = "outskirts.configDrafts";
+const draftDelay = 300;
 const externalDelay = 250;
 
 interface ConfigTarget {
@@ -85,6 +88,8 @@ export class ConfigEditorPanel {
   private summary: Promise<ProjectSummary> | undefined;
   private timer: NodeJS.Timeout | undefined;
   private checkGeneration = 0;
+  private draftTimer: NodeJS.Timeout | undefined;
+  private pendingDraft: { changes: Record<string, WireValue> | null } | undefined;
   current: Promise<void>;
 
   constructor(
@@ -158,8 +163,13 @@ export class ConfigEditorPanel {
       case "dismiss":
         await this.dismiss(received.id);
         return;
-      case "dirty":
-        this.panel.title = this.title(received.dirty);
+      case "draft":
+        this.panel.title = this.title(received.changes !== null);
+        this.pendingDraft = { changes: received.changes };
+        clearTimeout(this.draftTimer);
+        this.draftTimer = setTimeout(() => {
+          void this.flushDraft();
+        }, draftDelay);
         return;
     }
   }
@@ -170,6 +180,8 @@ export class ConfigEditorPanel {
     }
     this.disposed = true;
     clearTimeout(this.timer);
+    clearTimeout(this.draftTimer);
+    void this.flushDraft();
     this.onDispose();
     this.subscriptions.forEach((subscription) => {
       subscription.dispose();
@@ -217,6 +229,10 @@ export class ConfigEditorPanel {
       }
       this.lastText = text;
       this.configured = new Set([...Object.keys(contents.values), ...Object.keys(contents.complex)]);
+      const draft =
+        reason === "open" && error === undefined
+          ? restoreDraft(this.drafts()[this.target.key], text, schema.options, contents.values, new Set(Object.keys(contents.complex)))
+          : undefined;
       const state: EditorState = {
         project: this.target.name,
         file: this.fileName,
@@ -227,6 +243,7 @@ export class ConfigEditorPanel {
         complex: contents.complex,
         other: contents.other,
         error,
+        draft,
       };
       this.post({ type: "state", state, reason });
       await this.postRecommendations();
@@ -297,6 +314,9 @@ export class ConfigEditorPanel {
       this.post({ type: "saveFailed", message: message(problem) });
       return;
     }
+    clearTimeout(this.draftTimer);
+    this.pendingDraft = undefined;
+    await this.storeDraft(undefined);
     await this.load("saved");
   }
 
@@ -324,6 +344,29 @@ export class ConfigEditorPanel {
     }
     this.current = this.load("external");
     await this.current;
+  }
+
+  private drafts(): Record<string, Draft> {
+    return this.state.get<Record<string, Draft>>(draftsKey, {});
+  }
+
+  private async storeDraft(draft: Draft | undefined): Promise<void> {
+    const current = this.drafts();
+    if (draft === undefined && !(this.target.key in current)) {
+      return;
+    }
+    const others = Object.entries(current).filter(([key]) => key !== this.target.key);
+    const all = Object.fromEntries(draft === undefined ? others : [...others, [this.target.key, draft]]);
+    await this.state.update(draftsKey, all);
+  }
+
+  private async flushDraft(): Promise<void> {
+    const pending = this.pendingDraft;
+    if (pending === undefined) {
+      return;
+    }
+    this.pendingDraft = undefined;
+    await this.storeDraft(makeDraft(pending.changes, this.lastText ?? ""));
   }
 
   private dismissed(): string[] {

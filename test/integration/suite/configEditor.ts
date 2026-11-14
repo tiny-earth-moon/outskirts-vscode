@@ -83,5 +83,42 @@ export function describeConfigEditor(): void {
         rmSync(other, { recursive: true, force: true });
       }
     });
+
+    it("restores the unsaved changes of a closed editor and says when the file changed meanwhile", async () => {
+      await activateWithFake();
+      const other = mkdtempSync(path.join(os.tmpdir(), "outskirts-draft-"));
+      const config = path.join(other, ".outskirts.yml");
+      writeFileSync(config, "strict: true\n");
+      try {
+        const open = async (): Promise<ConfigEditorPanel> => {
+          const panel = await vscode.commands.executeCommand<ConfigEditorPanel | undefined>("outskirts.editConfiguration", vscode.Uri.file(other));
+          assert.ok(panel);
+          await panel.current;
+          return panel;
+        };
+        const first = await open();
+        assert.equal(last(first, "state")?.state.draft, undefined);
+        await first.receive({ type: "draft", changes: { quiet: true, strict: null } });
+        first.dispose();
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        const second = await open();
+        assert.notEqual(second, first);
+        assert.deepEqual(last(second, "state")?.state.draft, { changes: { quiet: true, strict: null }, changedOnDisk: false });
+        second.dispose();
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        writeFileSync(config, "strict: true\nformat: json\n");
+        const third = await open();
+        assert.deepEqual(last(third, "state")?.state.draft, { changes: { quiet: true, strict: null }, changedOnDisk: true });
+        await third.receive({ type: "save", changes: { quiet: true } });
+        assert.equal(readFileSync(config, "utf8"), "strict: true\nformat: json\nquiet: true\n");
+        third.dispose();
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        assert.equal(last(await open(), "state")?.state.draft, undefined);
+      } finally {
+        rmSync(other, { recursive: true, force: true });
+      }
+    });
   });
 }

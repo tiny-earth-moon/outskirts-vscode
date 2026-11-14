@@ -51,6 +51,7 @@ Its title bar has buttons to scan the project with these options and to open the
 - **Save** (or Cmd+S / Ctrl+S in the form) writes only the options that changed; an option set back to its default is removed from the file. The comments, the order of the keys and the keys outskirts does not know are kept; the latter are listed under **Other keys**, and a value the form cannot show, such as a `report_exclude` entry with `kinds`, is shown as YAML, to edit in the file. A new file starts with the `yaml-language-server` comment that enables completion in the YAML extension.
 - After saving, the form runs `outskirts config check` and shows "Configuration is valid" or the problems it reports.
 - When the file changes on disk, the form reloads it, or, when it has unsaved changes, asks whether to reload or keep them. **Open as YAML** opens the file itself.
+- Unsaved changes survive closing the editor: they are kept per project and restored when it opens again, with a banner that offers to discard them and says when the file changed on disk in the meantime.
 
 At the top, **Recommendations** are computed from the project when the form opens: a look at its files, capped in number and size, that skips build and dependency directories. Each one gives its reason; **Apply** sets the option in the form, to save, and **Dismiss** hides it for that project. Only options that exist in the installed outskirts and are not set in the file are recommended:
 

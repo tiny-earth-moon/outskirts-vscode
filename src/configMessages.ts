@@ -1,4 +1,5 @@
 import type { OtherKey } from "./configDocument";
+import type { RestoredDraft } from "./configDraft";
 import type { Recommendation } from "./configRecommendations";
 import type { ConfigOption, OptionValue } from "./configSchema";
 
@@ -17,6 +18,7 @@ export interface EditorState {
   complex: Record<string, string>;
   other: OtherKey[];
   error: string | undefined;
+  draft?: RestoredDraft;
 }
 
 export type StateReason = "open" | "saved" | "external" | "reload";
@@ -37,4 +39,4 @@ export type ViewMessage =
   | { type: "openYaml" }
   | { type: "dismiss"; id: string }
   | { type: "reload" }
-  | { type: "dirty"; dirty: boolean };
+  | { type: "draft"; changes: Record<string, WireValue> | null };
