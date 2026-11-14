@@ -17,12 +17,20 @@ import { printsAbsolutePathsWhenAsked, printsResultsWhenAsked } from "./version"
 import { relativeResultsBase } from "./location";
 import { checkRelativeLocations } from "./relativeResults";
 import { toEditorColumns } from "./editorColumns";
+import { configuredBaseline, usesBaseline } from "./baseline";
+import { readConfigFile } from "./baselineConfig";
+
+export interface ScanOverrides {
+  arguments?: readonly string[];
+  skipBuild?: boolean;
+}
 
 export class Scanner {
   private controller: AbortController | undefined;
   private cancelled = false;
   private removed: string | undefined;
   private readonly errors = new Set<string>();
+  private readonly baselines = new Set<string>();
   private readonly runningChanged = new vscode.EventEmitter<boolean>();
   readonly onDidChangeRunning = this.runningChanged.event;
   private readonly state = new ScanState((running) => {
@@ -46,6 +54,10 @@ export class Scanner {
     return this.errors;
   }
 
+  get baselined(): ReadonlySet<string> {
+    return this.baselines;
+  }
+
   forget(key: string): void {
     this.errors.delete(key);
   }
@@ -64,13 +76,17 @@ export class Scanner {
   }
 
   async scan(projects: readonly Project[]): Promise<void> {
+    await this.scanWith(projects, {});
+  }
+
+  async scanWith(projects: readonly Project[], overrides: ScanOverrides): Promise<boolean> {
     if (this.running) {
       void vscode.window.showWarningMessage("A scan is already running.");
-      return;
+      return false;
     }
     if (!vscode.workspace.isTrusted) {
       void vscode.window.showErrorMessage("A scan builds the project, so it only runs in a trusted workspace.");
-      return;
+      return false;
     }
     this.cancelled = false;
     const counts: number[] = [];
@@ -82,7 +98,7 @@ export class Scanner {
         this.errors.delete(project.key);
         this.store.startScan(project.key);
         try {
-          counts.push(await this.run(project, controller));
+          counts.push(await this.run(project, controller, overrides));
           if (projects.length === 1) {
             void announce(scanSummary(counts[0], project.name), counts[0]);
           }
@@ -106,6 +122,7 @@ export class Scanner {
       const total = counts.reduce((sum, count) => sum + count, 0);
       void announce(sequenceSummary(counts), total);
     }
+    return counts.length === projects.length;
   }
 
   dispose(): void {
@@ -113,14 +130,14 @@ export class Scanner {
     this.runningChanged.dispose();
   }
 
-  private async run(project: Project, controller: AbortController): Promise<number> {
+  private async run(project: Project, controller: AbortController, overrides: ScanOverrides): Promise<number> {
     const config = vscode.workspace.getConfiguration("outskirts", project.workspaceFolder.uri);
     const executable = resolveExecutable(config.inspect<string>("path"));
     const cwd = project.uri.fsPath;
     const extra = config.get<string[]>("arguments", []);
     const version = await probeVersion(executable, cwd);
-    const args = buildScanArguments(extra, {
-      skipBuild: config.get<boolean>("skipBuild", false),
+    const args = buildScanArguments([...extra, ...(overrides.arguments ?? [])], {
+      skipBuild: overrides.skipBuild === true || config.get<boolean>("skipBuild", false),
       project: projectArguments(await readProjectFolder(cwd), extra),
       printResults: version.state === "found" && printsResultsWhenAsked(version.version),
       absolutePaths: version.state === "found" && printsAbsolutePathsWhenAsked(version.version),
@@ -148,8 +165,24 @@ export class Scanner {
     const findings = await toEditorColumns(toFindings(results, base, aliases), (message) => {
       this.output.appendLine(message);
     });
+    await this.noteBaseline(project.key, cwd, extra);
     this.store.set(project.key, findings, severity, Date.now());
     return findings.length;
+  }
+
+  private async noteBaseline(key: string, cwd: string, extra: readonly string[]): Promise<void> {
+    let configured: string | undefined;
+    try {
+      const file = await readConfigFile(cwd);
+      configured = file.text === undefined ? undefined : configuredBaseline(file.text);
+    } catch (error) {
+      this.output.appendLine(`Could not read the baseline of the configuration: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    if (usesBaseline(configured, extra)) {
+      this.baselines.add(key);
+    } else {
+      this.baselines.delete(key);
+    }
   }
 }
 

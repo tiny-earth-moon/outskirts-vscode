@@ -47,4 +47,10 @@ describe("Projects view rows", () => {
     assert.equal(value({ results: new Map([[app.key, results(2, ["/a/A.swift"])]]) }), "project.idle.results");
     assert.equal(value({ failed: new Set([app.key]) }), "project.idle.results");
   });
+
+  it("marks a scanned project whose scan uses a baseline", () => {
+    const rows = projectRows([app, root], context({ results: new Map([[app.key, results(3)]]), baselined: new Set([app.key, root.key]) }));
+    assert.equal(rows.find((row) => row.key === app.key)?.description, "App · 3 results · baseline");
+    assert.equal(rows.find((row) => row.key === root.key)?.description, "not scanned");
+  });
 });
