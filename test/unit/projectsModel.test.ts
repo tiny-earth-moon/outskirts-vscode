@@ -32,7 +32,7 @@ describe("Projects view rows", () => {
     const rows = (partial: Partial<ProjectsContext>): string[] => projectRows([app], context(partial)).map((row) => row.description);
     assert.deepEqual(rows({}), ["App · not scanned"]);
     assert.deepEqual(rows({ scanning: app.key, results: new Map([[app.key, results(2)]]) }), ["App · scanning…"]);
-    assert.deepEqual(rows({ failed: new Set([app.key]) }), ["App · error"]);
+    assert.deepEqual(rows({ failed: new Set([app.key]) }), ["App · scan failed"]);
     assert.deepEqual(rows({ results: new Map([[app.key, results(0)]]) }), ["App · no unused code"]);
     assert.deepEqual(rows({ results: new Map([[app.key, results(1)]]) }), ["App · 1 result"]);
     assert.deepEqual(rows({ results: new Map([[app.key, results(3, ["/a/A.swift"])]]) }), ["App · 3 results, stale"]);

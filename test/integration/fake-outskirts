@@ -17,6 +17,8 @@ if (command === "version") {
     process.exit(1);
   }
   process.stdout.write(`${file}: ok\n`);
+} else if (process.argv.includes("--skip-stdout-results")) {
+  process.exit(0);
 } else {
   process.stdout.write(readFileSync(path.join(fixtures, "scan.json"), "utf8"));
 }

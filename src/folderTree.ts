@@ -3,12 +3,18 @@ import { FolderInfo, FolderNode, folderNode, viewState } from "./folderModel";
 import { FolderResults } from "./resultsStore";
 import { filterFindings, isActive, ResultsFilter } from "./resultsFilter";
 import { GroupBy, groupFindings, ResultGroup } from "./treeModel";
+import { ScanError } from "./scanError";
 
 export interface MessageNode {
   notice: string;
 }
 
-export type TreeNode = FolderNode | ResultGroup | Finding | MessageNode;
+export interface ErrorNode {
+  key: string;
+  scanError: ScanError;
+}
+
+export type TreeNode = FolderNode | ResultGroup | Finding | MessageNode | ErrorNode;
 
 export interface TreeContext {
   folders: readonly FolderInfo[];
@@ -17,6 +23,7 @@ export interface TreeContext {
   scanning: string | undefined;
   now: number;
   filter?: ResultsFilter;
+  errors?: ReadonlyMap<string, ScanError>;
 }
 
 export function isFolderNode(node: TreeNode): node is FolderNode {
@@ -25,6 +32,10 @@ export function isFolderNode(node: TreeNode): node is FolderNode {
 
 export function isMessageNode(node: TreeNode): node is MessageNode {
   return "notice" in node;
+}
+
+export function isErrorNode(node: TreeNode): node is ErrorNode {
+  return "scanError" in node;
 }
 
 export const noMatchNotice = "No results match the filter — Clear Filter";
@@ -45,7 +56,7 @@ export function treeChildren(context: TreeContext, node?: TreeNode): TreeNode[] 
 
 function rootNodes(context: TreeContext): TreeNode[] {
   const { folders, results } = context;
-  const state = viewState(folders, results);
+  const state = viewState(folders, results, context.errors);
   if (state === "none" || state === "unavailable") {
     return [];
   }
@@ -59,10 +70,19 @@ function rootNodes(context: TreeContext): TreeNode[] {
   if (folders.length === 1) {
     return folderGroups(context, folders[0]);
   }
-  return folders.map((folder) => folderNode(folder, results.get(folder.key), context.scanning === folder.key, context.now));
+  return folders.map((folder) => {
+    const node = folderNode(folder, results.get(folder.key), context.scanning === folder.key, context.now);
+    return context.errors?.has(folder.key) === true ? { ...node, description: "scan failed", expanded: true } : node;
+  });
 }
 
-function folderGroups(context: TreeContext, folder: FolderInfo): ResultGroup[] {
+function folderGroups(context: TreeContext, folder: FolderInfo): TreeNode[] {
+  const error = context.errors?.get(folder.key);
+  const errors: TreeNode[] = error === undefined ? [] : [{ key: folder.key, scanError: error }];
+  return [...errors, ...findingGroups(context, folder)];
+}
+
+function findingGroups(context: TreeContext, folder: FolderInfo): ResultGroup[] {
   const all = context.results.get(folder.key)?.findings ?? [];
   const findings = context.filter === undefined ? all : filterFindings(all, context.filter);
   return groupFindings(findings, context.groupBy, folder.root, folder.key);

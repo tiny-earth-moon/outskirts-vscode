@@ -63,9 +63,16 @@ export function folderNode(
   return { ...folder, type: "folder", description: folderDescription(entry, scanning, now), expanded, stale: (entry?.stale.size ?? 0) > 0 };
 }
 
-export function viewState(folders: readonly FolderInfo[], results: ReadonlyMap<string, FolderResults>): ViewState {
+export function viewState(
+  folders: readonly FolderInfo[],
+  results: ReadonlyMap<string, FolderResults>,
+  failed?: { has(key: string): boolean },
+): ViewState {
   if (folders.length === 0) {
     return "unavailable";
+  }
+  if (failed !== undefined && folders.some((folder) => failed.has(folder.key))) {
+    return "results";
   }
   const states = folders.map((folder) => resultsState(results.get(folder.key)));
   if (states.every((state) => state === "none")) {

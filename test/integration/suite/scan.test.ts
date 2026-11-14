@@ -63,6 +63,33 @@ describe("outskirts.scan", () => {
     await vscode.commands.executeCommand("outskirts.clear");
   });
 
+  it("shows a failed scan as an error node in Results until the next scan", async () => {
+    const { tree } = await activateWithFake();
+    const [folder] = vscode.workspace.workspaceFolders ?? [];
+    const config = (): vscode.WorkspaceConfiguration => vscode.workspace.getConfiguration("outskirts", folder.uri);
+    const settings = vscode.Uri.joinPath(folder.uri, ".vscode");
+    try {
+      await config().update("arguments", ["--skip-stdout-results"], vscode.ConfigurationTarget.WorkspaceFolder);
+      await vscode.commands.executeCommand("outskirts.scan");
+      const [node, ...rest] = tree.getChildren();
+      assert.equal(rest.length, 0);
+      const item = tree.getTreeItem(node);
+      assert.match(item.label as string, /^outskirts printed no results/);
+      assert.equal(item.description, "scan failed");
+      assert.equal(item.contextValue, "scanError.fixable");
+      assert.ok(item.tooltip instanceof vscode.MarkdownString);
+      assert.match(item.tooltip.value, /skip\\_stdout\\_results from the configuration file\\.$/);
+      assert.equal((item.iconPath as vscode.ThemeIcon).id, "error");
+    } finally {
+      await config().update("arguments", undefined, vscode.ConfigurationTarget.WorkspaceFolder);
+      await vscode.workspace.fs.delete(settings, { recursive: true });
+    }
+    await vscode.commands.executeCommand("outskirts.scan");
+    const [group] = tree.getChildren() as ResultGroup[];
+    assert.equal(group.label, "main.swift");
+    await vscode.commands.executeCommand("outskirts.clear");
+  });
+
   it("shows the scan options of the folder and toggles reusing the index", async () => {
     const { options } = await activateWithFake();
     await options.probed();
