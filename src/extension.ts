@@ -5,6 +5,7 @@ import { bindDiagnostics, followSeverity } from "./diagnostics";
 import { FolderNode, viewState } from "./folderModel";
 import { registerFixWithAgent } from "./fixWithAgent";
 import { isFolderNode } from "./folderTree";
+import { registerIgnoreActions } from "./ignoreActions";
 import { OptionsView, createOptionsView } from "./optionsView";
 import { pickScanTargets } from "./pickFolder";
 import { Project } from "./project";
@@ -102,6 +103,7 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
     options,
     agents,
     ...registerFixWithAgent(store, projects, agents),
+    ...registerIgnoreActions(store),
     registerConfigEditor(context.extensionUri, projects, context.workspaceState),
     resultsView,
     resultsView.onDidChangeSelection((event) => {
