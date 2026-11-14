@@ -1,11 +1,13 @@
 import * as vscode from "vscode";
 import { FolderInfo } from "./folderModel";
+import { ProjectKind } from "./projectsModel";
 
 export interface Project {
   readonly key: string;
   readonly name: string;
   readonly uri: vscode.Uri;
   readonly workspaceFolder: vscode.WorkspaceFolder;
+  readonly kind?: ProjectKind;
 }
 
 export function isNested(project: Project): boolean {
