@@ -31,8 +31,7 @@
     "workspaceContains:*/*.xcodeproj/project.pbxproj",
     "workspaceContains:*/*.xcworkspace/contents.xcworkspacedata",
     "workspaceContains:*/.outskirts.yml",
-    "workspaceContains:*/.periphery.yml",
-    "onView:outskirts.results"
+    "workspaceContains:*/.periphery.yml"
   ],
   "capabilities": {
     "untrustedWorkspaces": {
