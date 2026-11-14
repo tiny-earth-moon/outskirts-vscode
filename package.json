@@ -263,6 +263,184 @@
           "scope": "resource",
           "description": "Severity of the diagnostics reported by outskirts."
         },
+        "outskirts.severityByKind": {
+          "type": "object",
+          "scope": "resource",
+          "default": {},
+          "properties": {
+            "unused": {
+              "type": "string",
+              "enum": [
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "assignOnlyProperty": {
+              "type": "string",
+              "enum": [
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "unassignedOptionalProperty": {
+              "type": "string",
+              "enum": [
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "redundantProtocol": {
+              "type": "string",
+              "enum": [
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "redundantConformance": {
+              "type": "string",
+              "enum": [
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "redundantPublicAccessibility": {
+              "type": "string",
+              "enum": [
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "redundantOpenAccessibility": {
+              "type": "string",
+              "enum": [
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "missingFinal": {
+              "type": "string",
+              "enum": [
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "redundantAccessLevel": {
+              "type": "string",
+              "enum": [
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "emptyExtension": {
+              "type": "string",
+              "enum": [
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "superfluousIgnoreCommand": {
+              "type": "string",
+              "enum": [
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "unusedImport": {
+              "type": "string",
+              "enum": [
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "unusedAssetCatalogColor": {
+              "type": "string",
+              "enum": [
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "unusedAssetCatalogImage": {
+              "type": "string",
+              "enum": [
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "missingMetalFunction": {
+              "type": "string",
+              "enum": [
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            }
+          },
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "error",
+              "warning",
+              "information",
+              "hint",
+              "off"
+            ]
+          },
+          "markdownDescription": "Severity per kind of result, overriding `#outskirts.severity#` for that kind; `off` hides the kind from the Problems panel (it stays in the Results view). Only changes how results are shown: the analysis options stay in `.outskirts.yml`. Example: `{ \"missingFinal\": \"hint\", \"redundantPublicAccessibility\": \"off\", \"unused\": \"error\" }`."
+        },
+        "outskirts.groupBy": {
+          "type": "string",
+          "enum": [
+            "file",
+            "kind"
+          ],
+          "default": "file",
+          "scope": "window",
+          "markdownDescription": "Initial grouping of the Results view. The toggle in the view changes it for the session only."
+        },
         "outskirts.skipBuild": {
           "type": "boolean",
           "default": false,

@@ -38,7 +38,7 @@ On an outskirts diagnostic in a Swift file, the Quick Fix menu (the lightbulb, C
 Below the results, the collapsible **Scan Options** section shows the options of a project with their current values:
 
 - **Reuse existing index**: a checkbox that scans without building, on the index of the last build (`--skip-build`).
-- **Severity**: click to pick the severity of the diagnostics; the diagnostics already shown follow it.
+- **Severity**: click to pick the severity of the diagnostics, or **Per kind…** to override it for one kind of result (`outskirts.severityByKind`); the diagnostics already shown follow it.
 - **Extra arguments**: click to edit them, quoted like in a shell; no shell is used.
 - **Group results**: click to switch between grouping by file and by kind.
 - **Executable**: the executable and its version, or "not found"; click to open the settings.
@@ -129,6 +129,8 @@ The scan uses the project's normal mode. With `outskirts.skipBuild`, outskirts r
 | `outskirts.scanOnSave` | `off` | `project` rescans the project of a saved Swift file (see [Scan on save](#scan-on-save)). |
 | `outskirts.scanOnSaveDelay` | `1500` | Milliseconds after the last save before that scan (at least 500). |
 | `outskirts.severity` | `warning` | `error`, `warning`, `information` or `hint`. |
+| `outskirts.severityByKind` | `{}` | Severity per kind of result (`unused`, `missingFinal`, `redundantPublicAccessibility`…), overriding `outskirts.severity`; `off` hides the kind from the Problems panel, not from Results. Example: `{ "missingFinal": "hint", "redundantPublicAccessibility": "off" }`. |
+| `outskirts.groupBy` | `file` | Initial grouping of the Results view, `file` or `kind`; the toggle in the view lasts for the session. |
 | `outskirts.agent` | empty | Agent started by Fix with Agent: `claude`, `copilot`, `codex`, `gemini`, `cursor`, or `custom`; empty asks. |
 | `outskirts.agentCommand` | `[]` | Command of the custom agent, with `${prompt}` as one whole argument. |
 | `outskirts.agentVerify` | `false` | Lets the agent build the project or run its tests after its changes. |
