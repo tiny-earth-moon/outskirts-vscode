@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **Install prompt**: the empty Results view asks to install outskirts only once the check found it missing, not while the check runs; the Getting Started walkthrough hides its install step once outskirts is found.
+
 ## 0.3.0 (2026-11-14)
 
 - **Severity per kind**: `outskirts.severityByKind` maps a kind of result (`unused`, `missingFinal`, `redundantPublicAccessibility`…) to `error`, `warning`, `information`, `hint` or `off`, overriding `outskirts.severity`; `off` hides the kind from the Problems panel while Results still lists it. Invalid values fall back to `outskirts.severity` and are noted once in the output. The Severity row of Scan Options shows the overrides ("warning · 2 overrides") and offers **Per kind…**.
