@@ -39,7 +39,7 @@ export class ResultsStore {
     return count;
   }
 
-  set(folder: string, findings: readonly Finding[], severity: string, scannedAt: number): boolean {
+  set(folder: string, findings: readonly Finding[], severity: string, scannedAt: number, keepStale = false): boolean {
     if (this.known !== undefined && !this.known.has(folder)) {
       return false;
     }
@@ -50,7 +50,8 @@ export class ResultsStore {
     } else {
       this.shownScanStart.set(folder, scan.startedAt);
     }
-    const stale = new Set(findings.map((finding) => finding.file).filter((file) => scan?.changed.has(file) === true));
+    const previous = keepStale ? this.entries.get(folder)?.stale : undefined;
+    const stale = new Set(findings.map((finding) => finding.file).filter((file) => scan?.changed.has(file) === true || previous?.has(file) === true));
     this.entries.set(folder, { findings, severity, scannedAt, stale });
     this.notify();
     return true;

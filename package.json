@@ -42,6 +42,7 @@
         "outskirts.path",
         "outskirts.arguments",
         "outskirts.skipBuild",
+        "outskirts.scanOnSave",
         "outskirts.agent",
         "outskirts.agentCommand",
         "outskirts.agentVerify"
@@ -257,6 +258,21 @@
           "default": false,
           "scope": "resource",
           "description": "Reuse the existing index instead of building the project (passes `--skip-build`)."
+        },
+        "outskirts.scanOnSave": {
+          "type": "string",
+          "enum": ["off", "project"],
+          "enumDescriptions": ["Never scan on save.", "Rescan the project that contains a saved Swift file, once it was scanned."],
+          "default": "off",
+          "scope": "resource",
+          "description": "Rescan automatically when Swift files are saved. With `outskirts.skipBuild`, results follow the last build, not the saved file."
+        },
+        "outskirts.scanOnSaveDelay": {
+          "type": "number",
+          "default": 1500,
+          "minimum": 500,
+          "scope": "resource",
+          "description": "Milliseconds to wait after the last save before scanning on save (at least 500)."
         },
         "outskirts.agent": {
           "type": "string",

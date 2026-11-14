@@ -15,6 +15,18 @@ describe("ResultsStore", () => {
     assert.equal(store.total, 3);
   });
 
+  it("keeps stale files across a rescan of the same index only when asked", () => {
+    const store = new ResultsStore();
+    store.set("a", [finding], "warning", 1);
+    store.markStale("a", finding.file);
+    store.startScan("a", 2);
+    store.set("a", [finding], "warning", 3, true);
+    assert.deepEqual(store.get("a")?.stale, new Set([finding.file]));
+    store.startScan("a", 4);
+    store.set("a", [finding], "warning", 5);
+    assert.deepEqual(store.get("a")?.stale, new Set<string>());
+  });
+
   it("clears one folder or all of them", () => {
     const store = new ResultsStore();
     store.set("a", [finding], "warning", 1);
