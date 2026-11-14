@@ -25,6 +25,10 @@ const hintLabels: Partial<Record<string, string>> = {
   unusedImport: "Unused import",
 };
 
+export function isKnownHint(code: string): boolean {
+  return hintLabels[code] !== undefined;
+}
+
 export function hintLabel(code: string | undefined): string {
   if (code === undefined) {
     return "Other";

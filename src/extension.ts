@@ -13,6 +13,7 @@ import { Project } from "./project";
 import { ProjectList } from "./projectList";
 import { ProjectRow } from "./projectsModel";
 import { ProjectsTreeProvider } from "./projectsTree";
+import { registerResultsFilter } from "./resultsFilterCommands";
 import { ResultsStore } from "./resultsStore";
 import { ResultsTreeProvider } from "./resultsTree";
 import { Scanner } from "./scanCommand";
@@ -115,6 +116,7 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
     ...registerIgnoreActions(store),
     registerConfigEditor(context.extensionUri, projects, context.workspaceState),
     resultsView,
+    ...registerResultsFilter(tree, store, resultsView, context.workspaceState),
     resultsView.onDidChangeSelection((event) => {
       const node = event.selection.at(0);
       if (node !== undefined && isFolderNode(node)) {

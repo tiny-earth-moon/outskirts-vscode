@@ -1,5 +1,5 @@
 import { Finding } from "./findings";
-import { isFolderNode, isResultGroup, TreeNode } from "./folderTree";
+import { isFolderNode, isMessageNode, isResultGroup, TreeNode } from "./folderTree";
 import { FolderResults } from "./resultsStore";
 
 export interface FixScope {
@@ -10,6 +10,9 @@ export interface FixScope {
 export function nodeScope(node: TreeNode, results: ReadonlyMap<string, FolderResults>): FixScope | undefined {
   if (isFolderNode(node)) {
     return { project: node.key, findings: results.get(node.key)?.findings ?? [] };
+  }
+  if (isMessageNode(node)) {
+    return undefined;
   }
   if (isResultGroup(node)) {
     return node.folder === undefined ? undefined : { project: node.folder, findings: node.findings };

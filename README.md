@@ -16,6 +16,7 @@ outskirts installed, e.g. `brew install tiny-earth-moon/tap/outskirts`, and a pr
 - **outskirts: Refresh Projects** looks for projects again; the list also follows added or removed workspace folders, sub-directories and project files: `Package.swift`, Xcode projects and workspaces, `.outskirts.yml` and `.periphery.yml`.
 - **outskirts: Show Scan Options** opens the Scan Options view of the side bar; with several projects it first asks which project to show.
 - **outskirts: Group by File** / **Group by Kind** change how the side bar groups the results.
+- **Filter…** in the title bar of Results shows only the kinds of results picked (with their counts) and those whose name or path contains a text; the view tells "Filtered: 12 of 40", the filter is kept per workspace across scans, and **Clear Filter** removes it. The Problems panel keeps every diagnostic.
 - **outskirts: Open Settings** shows the settings of the extension.
 - **outskirts: Fix with Agent** hands the results to a coding agent; see [Fix with an agent](#fix-with-an-agent).
 - **outskirts: Select Agent** chooses that agent.

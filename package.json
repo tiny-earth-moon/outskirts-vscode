@@ -135,6 +135,24 @@
         "icon": "$(list-tree)"
       },
       {
+        "command": "outskirts.filterResults",
+        "title": "Filter…",
+        "category": "outskirts",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "outskirts.filterResultsActive",
+        "title": "Filter… (active)",
+        "category": "outskirts",
+        "icon": "$(filter-filled)"
+      },
+      {
+        "command": "outskirts.clearFilter",
+        "title": "Clear Filter",
+        "category": "outskirts",
+        "icon": "$(clear-all)"
+      },
+      {
         "command": "outskirts.scanOptions",
         "title": "Show Scan Options",
         "category": "outskirts",
@@ -366,6 +384,21 @@
           "group": "navigation@2"
         },
         {
+          "command": "outskirts.filterResults",
+          "when": "view == outskirts.results && !outskirts.filtered",
+          "group": "navigation@3"
+        },
+        {
+          "command": "outskirts.filterResultsActive",
+          "when": "view == outskirts.results && outskirts.filtered",
+          "group": "navigation@3"
+        },
+        {
+          "command": "outskirts.clearFilter",
+          "when": "view == outskirts.results && outskirts.filtered",
+          "group": "filter@1"
+        },
+        {
           "command": "outskirts.groupByKind",
           "when": "view == outskirts.results && outskirts.groupBy != kind",
           "group": "navigation@3"
@@ -412,6 +445,14 @@
         }
       ],
       "commandPalette": [
+        {
+          "command": "outskirts.filterResultsActive",
+          "when": "false"
+        },
+        {
+          "command": "outskirts.clearFilter",
+          "when": "outskirts.filtered"
+        },
         {
           "command": "outskirts.scanProject",
           "when": "false"

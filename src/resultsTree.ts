@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { FolderInfo, nextDescriptionChange } from "./folderModel";
-import { isFolderNode, isResultGroup, treeChildren, TreeNode } from "./folderTree";
+import { isFolderNode, isMessageNode, isResultGroup, treeChildren, TreeNode } from "./folderTree";
+import { noFilter, ResultsFilter } from "./resultsFilter";
 import { ResultsStore } from "./resultsStore";
 import { isStaleFinding, staleHint } from "./staleModel";
 import { GroupBy, groupDescription, leafDescription, leafLabel } from "./treeModel";
@@ -12,6 +13,7 @@ export class ResultsTreeProvider implements vscode.TreeDataProvider<ResultNode> 
   readonly onDidChangeTreeData = this.changed.event;
   private mode: GroupBy = "file";
   private timer: NodeJS.Timeout | undefined;
+  private currentFilter: ResultsFilter = noFilter;
 
   constructor(
     private readonly store: ResultsStore,
@@ -26,6 +28,15 @@ export class ResultsTreeProvider implements vscode.TreeDataProvider<ResultNode> 
 
   set groupBy(mode: GroupBy) {
     this.mode = mode;
+    this.refresh();
+  }
+
+  get filter(): ResultsFilter {
+    return this.currentFilter;
+  }
+
+  set filter(filter: ResultsFilter) {
+    this.currentFilter = filter;
     this.refresh();
   }
 
@@ -45,11 +56,18 @@ export class ResultsTreeProvider implements vscode.TreeDataProvider<ResultNode> 
       groupBy: this.mode,
       scanning: this.scanning(),
       now: this.now(),
+      filter: this.currentFilter,
     };
     return treeChildren(context, node);
   }
 
   getTreeItem(node: ResultNode): vscode.TreeItem {
+    if (isMessageNode(node)) {
+      const item = new vscode.TreeItem(node.notice, vscode.TreeItemCollapsibleState.None);
+      item.iconPath = new vscode.ThemeIcon("filter");
+      item.command = { command: "outskirts.clearFilter", title: "Clear Filter" };
+      return item;
+    }
     if (isFolderNode(node)) {
       const state = node.expanded ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed;
       const item = new vscode.TreeItem(node.name, state);
