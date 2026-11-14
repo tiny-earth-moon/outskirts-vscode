@@ -19,6 +19,7 @@ outskirts installed, e.g. `brew install tiny-earth-moon/tap/outskirts`, and a pr
 - **outskirts: Open Settings** shows the settings of the extension.
 - **outskirts: Fix with Agent** hands the results to a coding agent; see [Fix with an agent](#fix-with-an-agent).
 - **outskirts: Select Agent** chooses that agent.
+- **outskirts: Edit Configuration** opens the configuration file of a project in a form; see [Configuration editor](#configuration-editor).
 
 The output of outskirts is written to the "outskirts" output channel.
 
@@ -39,8 +40,29 @@ Below the results, the collapsible **Scan Options** section shows the options of
 - **Executable**: the executable and its version, or "not found"; click to open the settings.
 - **Agent**: the coding agent that Fix with Agent starts, "not set", or "(not installed)"; click to choose it.
 - **Agent verifies by building**: a checkbox (user setting `outskirts.agentVerify`, off by default) that lets the agent build the project or run its tests after its changes; off, it only searches the code for remaining uses and ends with the command to run to verify.
+- **Configuration…**: opens the [configuration editor](#configuration-editor) of the project.
 
 Its title bar has buttons to scan the project with these options and to open the settings. With several projects, the view names the project it shows, follows the project last scanned or selected in the results, and has a button to select another project.
+
+## Configuration editor
+
+**outskirts: Edit Configuration**, or the **Configuration…** row of Scan Options, opens the `.outskirts.yml` of a project in a form (the file outskirts reads: `.outskirts.yml`, `.outskirts.yaml`, `.periphery.yml` or `.periphery.yaml`, in that order); with several projects it asks which one. The form is built from `outskirts config schema`, so it lists every option of the installed outskirts, with its description and default, and needs an outskirts that prints its schema.
+
+- The options are grouped in sections (Project & build, Targets & files, Retention, Analysis, String Catalogs, Reporting & output, Advanced), with a search on the key and the description and a filter for the modified options.
+- A boolean is a switch, an option with fixed values a list, a text or a number a field (whole numbers only), and a list of values a list of tags: type and press Enter to add one, one per line when pasting. Each option shows its default, a marker when its value differs from the default, and a button to reset it. For `index_exclude`, whose values are added to built-in patterns that outskirts always keeps, those patterns are shown read-only and never written: the tags are the file's own patterns.
+- **Save** (or Cmd+S / Ctrl+S in the form) writes only the options that changed; an option set back to its default is removed from the file. The comments, the order of the keys and the keys outskirts does not know are kept; the latter are listed under **Other keys**, and a value the form cannot show, such as a `report_exclude` entry with `kinds`, is shown as YAML, to edit in the file. A new file starts with the `yaml-language-server` comment that enables completion in the YAML extension.
+- After saving, the form runs `outskirts config check` and shows "Configuration is valid" or the problems it reports.
+- When the file changes on disk, the form reloads it, or, when it has unsaved changes, asks whether to reload or keep them. **Open as YAML** opens the file itself.
+- Unsaved changes survive closing the editor: they are kept per project and restored when it opens again, with a banner that offers to discard them and says when the file changed on disk in the meantime.
+
+At the top, **Recommendations** are computed from the project when the form opens: a look at its files, capped in number and size, that skips build and dependency directories. Each one gives its reason; **Apply** sets the option in the form, to save, and **Dismiss** hides it for that project. Only options that exist in the installed outskirts and are not set in the file are recommended:
+
+- `project`, for a folder that holds one Xcode workspace or project and no `Package.swift`, and `schemes`, from the shared schemes of the Xcode project (the test schemes left out), or the scheme named after the project.
+- `retain_public` for a package of library products, or `retain_public_modules` with its libraries when it also has executables.
+- `retain_codable_properties` when Swift files use `Codable` or `Decodable`, `retain_encodable_properties` when they only use `Encodable`.
+- `retain_objc_accessible` with Objective-C sources, `retain_objc_annotated` with `@objc` alone, `retain_js_accessible` with `JSExport`.
+- `localized_string_key_literal_match` with String Catalogs and localized strings built from a variable.
+- Without a configuration file, **Create .outskirts.yml** applies all of them at once.
 
 ## Fix with an agent
 

@@ -6,7 +6,6 @@ import { ResultsStore } from "./resultsStore";
 
 const icons: Record<ProjectKind, string> = { package: "package", xcode: "device-mobile", generic: "folder" };
 
-export const configurationTemplate = "# outskirts configuration: https://outskirts.dev/docs/configuration/\n";
 
 export class ProjectsTreeProvider implements vscode.TreeDataProvider<ProjectRow> {
   private readonly changed = new vscode.EventEmitter<undefined>();
@@ -61,12 +60,3 @@ function relativePath(project: Project, several: boolean): string {
   return relative === "" ? project.workspaceFolder.name : `${project.workspaceFolder.name}/${relative}`;
 }
 
-export async function openConfiguration(project: Project): Promise<void> {
-  const uri = vscode.Uri.joinPath(project.uri, ".outskirts.yml");
-  try {
-    await vscode.workspace.fs.stat(uri);
-  } catch {
-    await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(configurationTemplate));
-  }
-  await vscode.window.showTextDocument(uri);
-}

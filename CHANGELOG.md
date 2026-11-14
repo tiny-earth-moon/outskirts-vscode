@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-- A Projects view lists every project the extension can scan with its state, and scans, cancels, clears or configures each one from its row.
+- **Projects view**: a Projects view lists every project the extension can scan with its state, and scans, cancels, clears or configures each one from its row.
+- **Configuration editor**: **outskirts: Edit Configuration**, also a Configuration row of Scan Options, edits `.outskirts.yml` in a form built from `outskirts config schema`, keeping comments and unknown keys, checks it with `outskirts config check` after saving, and recommends options from the files of the project.
 
 ## 0.1.2 (2026-11-14)
 

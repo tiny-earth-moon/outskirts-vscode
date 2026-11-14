@@ -17,7 +17,7 @@ export interface OptionsSnapshot {
   agentVerify: boolean;
 }
 
-export type OptionId = "skipBuild" | "severity" | "arguments" | "groupBy" | "executable" | "agent" | "agentVerify";
+export type OptionId = "skipBuild" | "severity" | "arguments" | "configuration" | "groupBy" | "executable" | "agent" | "agentVerify";
 
 export interface OptionRow {
   id: OptionId;
@@ -74,6 +74,13 @@ export function optionRows(snapshot: OptionsSnapshot): OptionRow[] {
       icon: "tools",
       tooltip: "Lets the agent build the project or run its tests after its changes; otherwise it only searches the code.",
       checked: snapshot.agentVerify,
+    },
+    {
+      id: "configuration",
+      label: "Configuration…",
+      description: ".outskirts.yml",
+      icon: "file-code",
+      tooltip: "Edit the options of outskirts in the configuration file of the project, with recommendations.",
     },
   ];
 }

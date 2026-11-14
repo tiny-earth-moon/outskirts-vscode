@@ -31,7 +31,7 @@ export function createOptionsView(
     const key = current.current;
     return key === undefined ? undefined : projects.find(key);
   };
-  const tree = new OptionsTreeProvider(() => project()?.workspaceFolder, groupBy.get, () => agents.status());
+  const tree = new OptionsTreeProvider(() => project()?.workspaceFolder, groupBy.get, () => agents.status(), () => project()?.uri);
   const view = vscode.window.createTreeView("outskirts.options", { treeDataProvider: tree });
   const refresh = (): void => {
     const shown = project();
