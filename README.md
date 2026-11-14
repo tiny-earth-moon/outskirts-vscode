@@ -21,6 +21,7 @@ outskirts installed, e.g. `brew install tiny-earth-moon/tap/outskirts`, and a pr
 - **outskirts: Fix with Agent** hands the results to a coding agent; see [Fix with an agent](#fix-with-an-agent).
 - **outskirts: Select Agent** chooses that agent.
 - **outskirts: Edit Configuration** opens the configuration file of a project in a form; see [Configuration editor](#configuration-editor).
+- **outskirts: Open Getting Started** opens the walkthrough *Find unused Swift code with outskirts* (install, first scan, review, configuration, baseline, CI); it also opens once after the extension is installed, and the empty Results view links to it, or to the install command when the executable is not found.
 
 The output of outskirts is written to the "outskirts" output channel.
 

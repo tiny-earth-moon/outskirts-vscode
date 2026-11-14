@@ -221,6 +221,16 @@
         "title": "Edit Configuration",
         "category": "outskirts",
         "icon": "$(file-code)"
+      },
+      {
+        "command": "outskirts.openWalkthrough",
+        "title": "Open Getting Started",
+        "category": "outskirts"
+      },
+      {
+        "command": "outskirts.installExecutable",
+        "title": "Open Terminal with the Install Command",
+        "category": "outskirts"
       }
     ],
     "configuration": {
@@ -359,8 +369,13 @@
       },
       {
         "view": "outskirts.results",
-        "contents": "Find the unused Swift code of this workspace with outskirts.\n[Scan](command:outskirts.scanView)",
-        "when": "outskirts.state == none && !outskirts.scanning"
+        "contents": "Scan your Swift project for unused code.\n[Scan](command:outskirts.scanView)\n[Getting Started](command:outskirts.openWalkthrough)",
+        "when": "outskirts.state == none && !outskirts.scanning && outskirts.executableFound"
+      },
+      {
+        "view": "outskirts.results",
+        "contents": "The outskirts executable was not found. Install it with Homebrew: `brew install tiny-earth-moon/tap/outskirts`.\n[Install outskirts](command:outskirts.installExecutable)\nIf it is installed elsewhere, [set outskirts.path](command:workbench.action.openSettings?%5B%22outskirts.path%22%5D) to its location, or open [Getting Started](command:outskirts.openWalkthrough).",
+        "when": "outskirts.state == none && !outskirts.scanning && !outskirts.executableFound"
       },
       {
         "view": "outskirts.results",
@@ -623,7 +638,82 @@
           "group": "agent@1"
         }
       ]
-    }
+    },
+    "walkthroughs": [
+      {
+        "id": "gettingStarted",
+        "title": "Find unused Swift code with outskirts",
+        "description": "Install outskirts, scan your project, review the results and keep the code base clean in CI.",
+        "steps": [
+          {
+            "id": "install",
+            "title": "Install outskirts",
+            "description": "Install the outskirts command line tool with Homebrew.\n[Open Terminal with the Command](command:outskirts.installExecutable)",
+            "media": {
+              "markdown": "media/walkthrough/install.md"
+            },
+            "completionEvents": [
+              "onContext:outskirts.executableFound"
+            ]
+          },
+          {
+            "id": "scan",
+            "title": "Run a first scan",
+            "description": "Scan a Swift package or Xcode project of the workspace.\n[Scan](command:outskirts.scan)",
+            "media": {
+              "markdown": "media/walkthrough/scan.md"
+            },
+            "completionEvents": [
+              "onContext:outskirts.state == results || outskirts.state == empty"
+            ]
+          },
+          {
+            "id": "review",
+            "title": "Review the results",
+            "description": "Check each result in the Results view and the Problems panel, and ignore false positives with a quick fix.\n[Show Problems](command:workbench.actions.view.problems)",
+            "media": {
+              "markdown": "media/walkthrough/review.md"
+            },
+            "completionEvents": [
+              "onCommand:workbench.actions.view.problems"
+            ]
+          },
+          {
+            "id": "configure",
+            "title": "Edit the configuration",
+            "description": "Tune `.outskirts.yml` with the recommendations for your project.\n[Edit Configuration](command:outskirts.editConfiguration)",
+            "media": {
+              "markdown": "media/walkthrough/configure.md"
+            },
+            "completionEvents": [
+              "onCommand:outskirts.editConfiguration"
+            ]
+          },
+          {
+            "id": "baseline",
+            "title": "Accept a baseline",
+            "description": "Hide today's results so that later scans show only new unused code.\n[Accept Baseline](command:outskirts.acceptBaseline)",
+            "media": {
+              "markdown": "media/walkthrough/baseline.md"
+            },
+            "completionEvents": [
+              "onCommand:outskirts.acceptBaseline"
+            ]
+          },
+          {
+            "id": "ci",
+            "title": "Use it in CI",
+            "description": "Scan every pull request with the GitHub Action.\n[Read the CI Guide](https://outskirts.dev/docs/ci/)",
+            "media": {
+              "markdown": "media/walkthrough/ci.md"
+            },
+            "completionEvents": [
+              "onLink:https://outskirts.dev/docs/ci/"
+            ]
+          }
+        ]
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run bundle",
