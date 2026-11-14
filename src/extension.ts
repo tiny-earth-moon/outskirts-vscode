@@ -1,3 +1,4 @@
+import { createOptionalView } from "./optionalView";
 import * as vscode from "vscode";
 import { AgentRegistry } from "./agentRegistry";
 import { registerConfigEditor } from "./configEditor";
@@ -75,7 +76,15 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
     }
   };
   const projectsTree = new ProjectsTreeProvider(store, () => projects.projects, () => scanner.scanning, () => scanner.failed);
-  const projectsView = vscode.window.createTreeView("outskirts.projects", { treeDataProvider: projectsTree });
+  const projectsView = createOptionalView(
+    () => vscode.window.createTreeView("outskirts.projects", { treeDataProvider: projectsTree }),
+    (error) => {
+      output.appendLine(`Projects view unavailable: ${error instanceof Error ? error.message : String(error)}`);
+      void vscode.window
+        .showWarningMessage("outskirts was updated: reload the window to show its Projects view.", "Reload Window")
+        .then((choice) => (choice === undefined ? undefined : vscode.commands.executeCommand("workbench.action.reloadWindow")));
+    },
+  );
   const rowProject = (row: ProjectRow | undefined): Project | undefined => (row === undefined ? undefined : projects.find(row.key));
   setContext("groupBy", tree.groupBy);
   const ready = projects.refresh();
@@ -140,7 +149,7 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
       groupBy("kind");
     }),
     projectsTree,
-    projectsView,
+    ...(projectsView === undefined ? [] : [projectsView]),
     store.onDidChange(() => { projectsTree.refresh(); }),
     projects.onDidChange(() => { projectsTree.refresh(); }),
     scanner.onDidChangeRunning(() => { projectsTree.refresh(); }),
