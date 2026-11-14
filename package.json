@@ -2,7 +2,7 @@
   "name": "outskirts",
   "displayName": "outskirts",
   "description": "Finds unused Swift code with outskirts: results in a side bar and the Problems panel, per project, with a hand-off to a coding agent.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "tiny-earth-moon",
   "license": "MIT",
   "icon": "images/icon.png",
@@ -271,8 +271,14 @@
         },
         "outskirts.scanOnSave": {
           "type": "string",
-          "enum": ["off", "project"],
-          "enumDescriptions": ["Never scan on save.", "Rescan the project that contains a saved Swift file, once it was scanned."],
+          "enum": [
+            "off",
+            "project"
+          ],
+          "enumDescriptions": [
+            "Never scan on save.",
+            "Rescan the project that contains a saved Swift file, once it was scanned."
+          ],
           "default": "off",
           "scope": "resource",
           "description": "Rescan automatically when Swift files are saved. With `outskirts.skipBuild`, results follow the last build, not the saved file."
