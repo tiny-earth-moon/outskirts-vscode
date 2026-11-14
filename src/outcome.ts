@@ -32,9 +32,9 @@ function hintFor(stderr: string): string | undefined {
   return hints.find(([error]) => stderr.includes(error))?.[1];
 }
 
-export function interpretRun(run: ProcessRun): ScanResult[] {
+export function interpretRun(run: ProcessRun, redirects: readonly FixTarget[] = ["arguments", "configuration"]): ScanResult[] {
   if (run.exitCode === 0) {
-    return parseResults(run.stdout);
+    return parseResults(run.stdout, redirects);
   }
   if (run.exitCode === 1 && run.stdout.trim() !== "") {
     try {
