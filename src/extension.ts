@@ -10,7 +10,7 @@ import { pickScanTargets } from "./pickFolder";
 import { Project } from "./project";
 import { ProjectList } from "./projectList";
 import { ProjectRow } from "./projectsModel";
-import { ProjectsTreeProvider, openConfiguration } from "./projectsTree";
+import { ProjectsTreeProvider } from "./projectsTree";
 import { ResultsStore } from "./resultsStore";
 import { ResultsTreeProvider } from "./resultsTree";
 import { Scanner } from "./scanCommand";
@@ -160,7 +160,7 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
     vscode.commands.registerCommand("outskirts.openConfiguration", async (row?: ProjectRow) => {
       const project = rowProject(row);
       if (project !== undefined) {
-        await openConfiguration(project);
+        await vscode.commands.executeCommand("outskirts.editConfiguration", project);
       }
     }),
     vscode.commands.registerCommand("outskirts.revealProject", async (row?: ProjectRow) => {
