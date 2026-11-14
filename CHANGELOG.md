@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2 (2026-11-14)
+
+- Same extension as 0.1.1, published again so that it is available on Open VSX.
+
 ## 0.1.1 (2026-11-13)
 
 - **Xcode projects**: a folder that holds only an Xcode workspace or project is scanned with `--project`, the workspace first; with several, the scan asks to choose one. A missing `--project` or `--schemes` is shown with the error of outskirts and the setting that fixes it. An XcodeGen `project.yml` alone is no longer listed as a project.
