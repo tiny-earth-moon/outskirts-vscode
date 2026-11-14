@@ -225,7 +225,7 @@ const rules: readonly Rule[] = [
     return {
       id: "localized_string_key_literal_match",
       title: "Keep String Catalog keys used through variables",
-      reason: `${plural(catalogs, "String Catalog")} and ${plural(dynamic, "Swift file")} that localize a non-literal key: keys equal to a string literal are then kept.`,
+      reason: `${plural(catalogs, "String Catalog")} and ${plural(dynamic, "Swift file")} that ${dynamic === 1 ? "localizes" : "localize"} a non-literal key: keys equal to a string literal are then kept.`,
       changes: { localized_string_key_literal_match: true },
     };
   },

@@ -119,6 +119,11 @@ describe("recommend", () => {
       "localized_string_key_literal_match",
     ]);
     assert.equal(found[0].reason, "2 Swift files use Codable or Decodable, whose synthesized coding reads properties that outskirts cannot see.");
+    assert.equal(found[3].reason, "1 String Catalog and 1 Swift file that localizes a non-literal key: keys equal to a string literal are then kept.");
+    const several = recommend(
+      input({ summary: summary({ files: ["A.xcstrings", "B.xcstrings"], signals: { dynamicLocalizedKey: 2 } }) }),
+    );
+    assert.equal(several[0].reason, "2 String Catalogs and 2 Swift files that localize a non-literal key: keys equal to a string literal are then kept.");
     const swiftOnly = recommend(input({ summary: summary({ signals: { encodable: 1, objc: 1, dynamicLocalizedKey: 1 } }) }));
     assert.deepEqual(ids(swiftOnly), ["retain_encodable_properties", "retain_objc_annotated"]);
   });
