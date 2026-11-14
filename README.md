@@ -112,6 +112,12 @@ Each project keeps its own results: scanning or clearing one leaves the others u
 
 Settings are stored per workspace folder, so the projects found in the same folder share them; the Scan Options view then reads "Library · shared by Repos". Options specific to one project belong in its own `.outskirts.yml`.
 
+## Scan on save
+
+With `outskirts.scanOnSave` set to `project`, saving a Swift file rescans its project once the saves stop for `outskirts.scanOnSaveDelay` ms. Saves across files of one project make one scan; a save during a scan queues a single rerun. A project never scanned in this session is not scanned on save. The status bar shows "outskirts: scanning on save…"; click it or run **Cancel Scan** to stop.
+
+The scan uses the project's normal mode. With `outskirts.skipBuild`, outskirts reads the index of the last build, which saving does not update: the results follow the last build, the saved files stay marked stale until a scan that builds, and a message says so once per session.
+
 ## Settings
 
 | Setting | Default | Description |
@@ -119,6 +125,8 @@ Settings are stored per workspace folder, so the projects found in the same fold
 | `outskirts.path` | `outskirts` | Absolute path of the executable (a leading `~` is the home folder), or its name, looked up on the PATH and never in the project folder. |
 | `outskirts.arguments` | `[]` | Extra arguments for `outskirts scan`, e.g. `["--schemes", "App"]`, after the ones the extension passes (`--project`: see [Several projects](#several-projects)). |
 | `outskirts.skipBuild` | `false` | Reuse the existing index instead of building the project (`--skip-build`). |
+| `outskirts.scanOnSave` | `off` | `project` rescans the project of a saved Swift file (see [Scan on save](#scan-on-save)). |
+| `outskirts.scanOnSaveDelay` | `1500` | Milliseconds after the last save before that scan (at least 500). |
 | `outskirts.severity` | `warning` | `error`, `warning`, `information` or `hint`. |
 | `outskirts.agent` | empty | Agent started by Fix with Agent: `claude`, `copilot`, `codex`, `gemini`, `cursor`, or `custom`; empty asks. |
 | `outskirts.agentCommand` | `[]` | Command of the custom agent, with `${prompt}` as one whole argument. |

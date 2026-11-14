@@ -19,6 +19,7 @@ import { registerResultsFilter } from "./resultsFilterCommands";
 import { ResultsStore } from "./resultsStore";
 import { ResultsTreeProvider } from "./resultsTree";
 import { Scanner } from "./scanCommand";
+import { watchSaves } from "./scanOnSave";
 import { watchStaleFiles } from "./staleWatcher";
 import { createStatusBar } from "./statusBar";
 import { GroupBy } from "./treeModel";
@@ -102,6 +103,7 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
     bindDiagnostics(collection, store),
     followSeverity(store, () => projects.projects),
     watchStaleFiles(store, (key) => projects.find(key)?.uri.fsPath),
+    watchSaves(store, scanner, (key) => projects.find(key), (uri) => projects.containing(uri)),
     store.onDidChange(updateState),
     projects.onDidChange(() => {
       store.retain(projects.infos.map((folder) => folder.key));

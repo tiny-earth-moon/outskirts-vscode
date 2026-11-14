@@ -23,12 +23,14 @@ import { readConfigFile } from "./baselineConfig";
 export interface ScanOverrides {
   arguments?: readonly string[];
   skipBuild?: boolean;
+  onSave?: boolean;
 }
 
 export class Scanner {
   private controller: AbortController | undefined;
   private cancelled = false;
   private removed: string | undefined;
+  private onSave = false;
   private readonly errors = new Set<string>();
   private readonly baselines = new Set<string>();
   private readonly runningChanged = new vscode.EventEmitter<boolean>();
@@ -48,6 +50,10 @@ export class Scanner {
 
   get scanning(): string | undefined {
     return this.state.scanning;
+  }
+
+  get scanningOnSave(): boolean {
+    return this.running && this.onSave;
   }
 
   get failed(): ReadonlySet<string> {
@@ -89,6 +95,8 @@ export class Scanner {
       return false;
     }
     this.cancelled = false;
+    const onSave = overrides.onSave === true;
+    this.onSave = onSave;
     const counts: number[] = [];
     await this.state.sequence(
       projects,
@@ -99,7 +107,7 @@ export class Scanner {
         this.store.startScan(project.key);
         try {
           counts.push(await this.run(project, controller, overrides));
-          if (projects.length === 1) {
+          if (projects.length === 1 && !onSave) {
             void announce(scanSummary(counts[0], project.name), counts[0]);
           }
         } catch (error) {
@@ -118,7 +126,8 @@ export class Scanner {
       },
       () => this.cancelled,
     );
-    if (projects.length > 1 && counts.length > 0) {
+    this.onSave = false;
+    if (projects.length > 1 && counts.length > 0 && !onSave) {
       const total = counts.reduce((sum, count) => sum + count, 0);
       void announce(sequenceSummary(counts), total);
     }
@@ -136,8 +145,10 @@ export class Scanner {
     const cwd = project.uri.fsPath;
     const extra = config.get<string[]>("arguments", []);
     const version = await probeVersion(executable, cwd);
+    const skipBuild = overrides.skipBuild === true || config.get<boolean>("skipBuild", false);
+    const onSave = overrides.onSave === true;
     const args = buildScanArguments([...extra, ...(overrides.arguments ?? [])], {
-      skipBuild: overrides.skipBuild === true || config.get<boolean>("skipBuild", false),
+      skipBuild,
       project: projectArguments(await readProjectFolder(cwd), extra),
       printResults: version.state === "found" && printsResultsWhenAsked(version.version),
       absolutePaths: version.state === "found" && printsAbsolutePathsWhenAsked(version.version),
@@ -146,7 +157,7 @@ export class Scanner {
     severityFromSetting(severity);
     const title = `Scanning ${project.name}`;
     const run = await vscode.window.withProgress(
-      { location: vscode.ProgressLocation.Notification, title, cancellable: true },
+      { location: onSave ? vscode.ProgressLocation.Window : vscode.ProgressLocation.Notification, title, cancellable: !onSave },
       (_progress, token) => {
         token.onCancellationRequested(() => {
           this.cancel();
@@ -166,7 +177,7 @@ export class Scanner {
       this.output.appendLine(message);
     });
     await this.noteBaseline(project.key, cwd, extra);
-    this.store.set(project.key, findings, severity, Date.now());
+    this.store.set(project.key, findings, severity, Date.now(), onSave && skipBuild);
     return findings.length;
   }
 

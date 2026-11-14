@@ -13,9 +13,10 @@ export function createStatusBar(
   item.name = "outskirts";
   item.command = "outskirts.results.focus";
   const update = (): void => {
+    item.command = scanner.scanningOnSave ? "outskirts.cancel" : "outskirts.results.focus";
     if (scanner.running) {
-      item.text = "$(loading~spin) outskirts";
-      item.tooltip = "outskirts: scanning";
+      item.text = scanner.scanningOnSave ? "$(loading~spin) outskirts: scanning on save…" : "$(loading~spin) outskirts";
+      item.tooltip = scanner.scanningOnSave ? "outskirts: scanning on save, click to cancel" : "outskirts: scanning";
       item.show();
     } else if (store.all().size === 0) {
       item.hide();
