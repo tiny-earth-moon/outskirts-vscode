@@ -559,7 +559,7 @@
       {
         "view": "outskirts.results",
         "contents": "The outskirts executable was not found. Install it with Homebrew: `brew install tiny-earth-moon/tap/outskirts`.\n[Install outskirts](command:outskirts.installExecutable)\nIf it is installed elsewhere, [set outskirts.path](command:workbench.action.openSettings?%5B%22outskirts.path%22%5D) to its location, or open [Getting Started](command:outskirts.openWalkthrough).",
-        "when": "outskirts.state == none && !outskirts.scanning && !outskirts.executableFound"
+        "when": "outskirts.state == none && !outskirts.scanning && outskirts.executableMissing"
       },
       {
         "view": "outskirts.results",

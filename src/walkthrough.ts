@@ -13,6 +13,7 @@ export function registerWalkthrough(context: vscode.ExtensionContext): vscode.Di
       found = false;
     }
     await vscode.commands.executeCommand("setContext", "outskirts.executableFound", found);
+    await vscode.commands.executeCommand("setContext", "outskirts.executableMissing", !found);
   };
   void detect();
   const testing = context.extensionMode === vscode.ExtensionMode.Test;
