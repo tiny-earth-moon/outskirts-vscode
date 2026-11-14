@@ -5,8 +5,10 @@ import { ConfigContents, configFileName, configFileNames, readConfig, schemaComm
 import { editorHtml, makeNonce } from "./configEditorHtml";
 import { EditorState, HostMessage, StateReason, ViewMessage, WireValue } from "./configMessages";
 import { ProjectSummary, recommend } from "./configRecommendations";
+import { ExecutableNotFoundError } from "./commandPath";
 import { checkConfig, LoadedSchema, loadSchema } from "./configRunner";
 import { OptionValue } from "./configSchema";
+import { installHint } from "./optionsModel";
 import { executableName } from "./optionsTree";
 import { pickOneProject } from "./pickFolder";
 import { ProjectList } from "./projectList";
@@ -235,7 +237,8 @@ export class ConfigEditorPanel {
         this.last.delete("checking");
       }
     } catch (problem) {
-      this.post({ type: "failed", message: message(problem) });
+      const hint = problem instanceof ExecutableNotFoundError ? ` ${installHint}` : "";
+      this.post({ type: "failed", message: `${message(problem)}${hint}` });
     }
   }
 
