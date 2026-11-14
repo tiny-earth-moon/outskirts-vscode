@@ -45,13 +45,12 @@ let package = Package(
 )`;
 
 describe("sourceSignals", () => {
-  it("finds Codable, Objective-C, JavaScriptCore and test imports", () => {
+  it("finds Codable, Objective-C and JavaScriptCore", () => {
     assert.deepEqual(sourceSignals("struct A: Codable {}"), ["codable"]);
     assert.deepEqual(sourceSignals("struct A: Encodable {}"), ["encodable"]);
     assert.deepEqual(sourceSignals("@objcMembers final class A: NSObject {}"), ["objc"]);
     assert.deepEqual(sourceSignals("@objc protocol E: JSExport {}"), ["objc", "jsExport"]);
-    assert.deepEqual(sourceSignals("@testable import App\nimport XCTest\n"), ["tests"]);
-    assert.deepEqual(sourceSignals("import Testing"), ["tests"]);
+    assert.deepEqual(sourceSignals("@testable import App\nimport XCTest\n"), []);
     assert.deepEqual(sourceSignals("let encoder = JSONEncoder()"), []);
   });
 
@@ -109,7 +108,7 @@ describe("recommend", () => {
       input({
         summary: summary({
           files: ["Legacy/Bridge.m", "Resources/Localizable.xcstrings"],
-          signals: { codable: 2, encodable: 1, objc: 3, jsExport: 1, tests: 4, dynamicLocalizedKey: 1 },
+          signals: { codable: 2, encodable: 1, objc: 3, jsExport: 1, dynamicLocalizedKey: 1 },
         }),
       }),
     );
@@ -118,7 +117,6 @@ describe("recommend", () => {
       "retain_objc_accessible",
       "retain_js_accessible",
       "localized_string_key_literal_match",
-      "exclude_tests",
     ]);
     assert.equal(found[0].reason, "2 Swift files use Codable or Decodable, whose synthesized coding reads properties that outskirts cannot see.");
     const swiftOnly = recommend(input({ summary: summary({ signals: { encodable: 1, objc: 1, dynamicLocalizedKey: 1 } }) }));
@@ -126,11 +124,11 @@ describe("recommend", () => {
   });
 
   it("never recommends an option already set, dismissed or missing from the installed outskirts", () => {
-    const signals = { codable: 1, tests: 1, objc: 1 };
+    const signals = { codable: 1, objc: 1, jsExport: 1 };
     const found = recommend(
       input({
         summary: summary({ signals }),
-        configured: new Set(["exclude_tests"]),
+        configured: new Set(["retain_js_accessible"]),
         dismissed: new Set(["retain_objc_annotated"]),
         keys: new Set([...keys].filter((key) => key !== "retain_codable_properties")),
       }),
@@ -139,9 +137,9 @@ describe("recommend", () => {
   });
 
   it("offers to create the file with the other recommendations when there is none", () => {
-    const found = recommend(input({ fileExists: false, summary: summary({ signals: { codable: 1, tests: 1 } }) }));
-    assert.deepEqual(ids(found), ["create", "retain_codable_properties", "exclude_tests"]);
-    assert.deepEqual(found[0].changes, { retain_codable_properties: true, exclude_tests: true });
+    const found = recommend(input({ fileExists: false, summary: summary({ signals: { codable: 1, jsExport: 1 } }) }));
+    assert.deepEqual(ids(found), ["create", "retain_codable_properties", "retain_js_accessible"]);
+    assert.deepEqual(found[0].changes, { retain_codable_properties: true, retain_js_accessible: true });
     assert.equal(found[0].title, "Create .outskirts.yml");
     assert.deepEqual(ids(recommend(input({ fileExists: false, dismissed: new Set(["create"]) }))), []);
     assert.deepEqual(recommend(input({ fileExists: false }))[0].changes, {});

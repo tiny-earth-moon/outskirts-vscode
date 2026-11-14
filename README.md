@@ -59,7 +59,6 @@ At the top, **Recommendations** are computed from the project when the form open
 - `retain_codable_properties` when Swift files use `Codable` or `Decodable`, `retain_encodable_properties` when they only use `Encodable`.
 - `retain_objc_accessible` with Objective-C sources, `retain_objc_annotated` with `@objc` alone, `retain_js_accessible` with `JSExport`.
 - `localized_string_key_literal_match` with String Catalogs and localized strings built from a variable.
-- `exclude_tests` when test files import XCTest or Testing.
 - Without a configuration file, **Create .outskirts.yml** applies all of them at once.
 
 ## Fix with an agent

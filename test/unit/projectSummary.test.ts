@@ -42,7 +42,7 @@ describe("summarizeProject", () => {
     });
     const summary = await summarizeProject("/p", fileSystem);
     assert.deepEqual(summary.files, ["Package.swift", "Sources/Kit/Bridge.swift", "Sources/Kit/Model.swift", "Tests/KitTests/ModelTests.swift"]);
-    assert.deepEqual(summary.signals, { codable: 1, objc: 1, tests: 1 });
+    assert.deepEqual(summary.signals, { codable: 1, objc: 1 });
     assert.equal(summary.manifest, '.library(name: "Kit", targets: [])');
     assert.equal(summary.truncated, false);
   });
@@ -62,7 +62,7 @@ describe("summarizeProject", () => {
 });
 
 describe("summarizeProject on disk", () => {
-  it("recommends the options of a library package with Codable types and tests", async () => {
+  it("recommends the options of a library package with Codable types, never leaving the tests out", async () => {
     const root = path.join(__dirname, "../../../test/fixtures/config-project");
     const summary = await summarizeProject(root);
     assert.deepEqual(summary.files, [".outskirts.yml", "Package.swift", "Sources/Kit/Payload.swift", "Tests/KitTests/PayloadTests.swift"]);
@@ -74,7 +74,7 @@ describe("summarizeProject on disk", () => {
       fileName: ".outskirts.yml",
       dismissed: new Set(),
     });
-    assert.deepEqual(found.map((recommendation) => recommendation.id), ["retain_codable_properties", "exclude_tests"]);
+    assert.deepEqual(found.map((recommendation) => recommendation.id), ["retain_codable_properties"]);
     assert.equal(found[0].reason, "1 Swift file uses Codable or Decodable, whose synthesized coding reads properties that outskirts cannot see.");
   });
 });

@@ -1,6 +1,6 @@
 import { OptionValue } from "./configSchema";
 
-export type Signal = "codable" | "encodable" | "objc" | "jsExport" | "tests" | "dynamicLocalizedKey";
+export type Signal = "codable" | "encodable" | "objc" | "jsExport" | "dynamicLocalizedKey";
 
 export interface ProjectSummary {
   files: readonly string[];
@@ -30,7 +30,6 @@ const signalPatterns: readonly (readonly [Signal, RegExp])[] = [
   ["encodable", /\bEncodable\b/],
   ["objc", /@objc(?:Members)?\b/],
   ["jsExport", /\bJSExport\b/],
-  ["tests", /^[ \t]*(?:@testable[ \t]+)?import[ \t]+(?:XCTest|Testing)\b/m],
   ["dynamicLocalizedKey", /(?:\bNSLocalizedString\(|\bString\(localized:|\bLocalizedStringKey\(|\bLocalizedStringResource\()[ \t]*(?![ \t"])/],
 ];
 
@@ -228,18 +227,6 @@ const rules: readonly Rule[] = [
       title: "Keep String Catalog keys used through variables",
       reason: `${plural(catalogs, "String Catalog")} and ${plural(dynamic, "Swift file")} that localize a non-literal key: keys equal to a string literal are then kept.`,
       changes: { localized_string_key_literal_match: true },
-    };
-  },
-  (summary): Recommendation | undefined => {
-    const tests = count(summary, "tests");
-    if (tests === 0) {
-      return undefined;
-    }
-    return {
-      id: "exclude_tests",
-      title: "Leave the test targets out",
-      reason: `${plural(tests, "test file")} found: without the tests, the scan builds less and reports code only the tests use.`,
-      changes: { exclude_tests: true },
     };
   },
 ];
