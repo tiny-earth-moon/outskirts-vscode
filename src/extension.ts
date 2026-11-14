@@ -23,6 +23,7 @@ import { watchSaves } from "./scanOnSave";
 import { watchStaleFiles } from "./staleWatcher";
 import { createStatusBar } from "./statusBar";
 import { GroupBy } from "./treeModel";
+import { registerWalkthrough } from "./walkthrough";
 
 export interface OutskirtsApi {
   readonly tree: ResultsTreeProvider;
@@ -122,6 +123,7 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
     ...registerBaselineCommands(projects, scanner, store),
     registerConfigEditor(context.extensionUri, projects, context.workspaceState),
     resultsView,
+    ...registerWalkthrough(context),
     ...registerResultsFilter(tree, store, resultsView, context.workspaceState),
     resultsView.onDidChangeSelection((event) => {
       const node = event.selection.at(0);
