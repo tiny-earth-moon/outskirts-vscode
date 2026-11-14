@@ -1,5 +1,6 @@
 import * as assert from "node:assert/strict";
 import * as path from "node:path";
+import { recommend } from "../../src/configRecommendations";
 import { summarizeProject, SummaryFileSystem } from "../../src/projectSummary";
 
 function fakeFileSystem(tree: Record<string, string>): SummaryFileSystem & { reads: string[] } {
@@ -57,5 +58,23 @@ describe("summarizeProject", () => {
     assert.equal(summary.truncated, true);
     assert.equal(fileSystem.reads.length, 3);
     assert.deepEqual(summary.signals, { codable: 3 });
+  });
+});
+
+describe("summarizeProject on disk", () => {
+  it("recommends the options of a library package with Codable types and tests", async () => {
+    const root = path.join(__dirname, "../../../test/fixtures/config-project");
+    const summary = await summarizeProject(root);
+    assert.deepEqual(summary.files, [".outskirts.yml", "Package.swift", "Sources/Kit/Payload.swift", "Tests/KitTests/PayloadTests.swift"]);
+    const found = recommend({
+      summary,
+      keys: new Set(["retain_public", "retain_codable_properties", "exclude_tests"]),
+      configured: new Set(["retain_public"]),
+      fileExists: true,
+      fileName: ".outskirts.yml",
+      dismissed: new Set(),
+    });
+    assert.deepEqual(found.map((recommendation) => recommendation.id), ["retain_codable_properties", "exclude_tests"]);
+    assert.equal(found[0].reason, "1 Swift file uses Codable or Decodable, whose synthesized coding reads properties that outskirts cannot see.");
   });
 });

@@ -52,6 +52,10 @@ function plural(amount: number, noun: string): string {
   return `${String(amount)} ${noun}${amount === 1 ? "" : "s"}`;
 }
 
+function uses(amount: number): string {
+  return amount === 1 ? "uses" : "use";
+}
+
 function sample(names: readonly string[], limit = 3): string {
   const shown = names.slice(0, limit).join(", ");
   return names.length > limit ? `${shown}, …` : shown;
@@ -165,7 +169,7 @@ const rules: readonly Rule[] = [
       return {
         id: "retain_codable_properties",
         title: "Keep the properties of Codable types",
-        reason: `${plural(codable, "Swift file")} use Codable or Decodable, whose synthesized coding reads properties that outskirts cannot see.`,
+        reason: `${plural(codable, "Swift file")} ${uses(codable)} Codable or Decodable, whose synthesized coding reads properties that outskirts cannot see.`,
         changes: { retain_codable_properties: true },
       };
     }
@@ -176,7 +180,7 @@ const rules: readonly Rule[] = [
     return {
       id: "retain_encodable_properties",
       title: "Keep the properties of Encodable types",
-      reason: `${plural(encodable, "Swift file")} use Encodable, whose synthesized encoding reads properties that outskirts cannot see.`,
+      reason: `${plural(encodable, "Swift file")} ${uses(encodable)} Encodable, whose synthesized encoding reads properties that outskirts cannot see.`,
       changes: { retain_encodable_properties: true },
     };
   },
@@ -197,7 +201,7 @@ const rules: readonly Rule[] = [
     return {
       id: "retain_objc_annotated",
       title: "Keep the @objc declarations",
-      reason: `${plural(annotated, "Swift file")} use @objc, whose declarations the Objective-C runtime may call through selectors.`,
+      reason: `${plural(annotated, "Swift file")} ${uses(annotated)} @objc, whose declarations the Objective-C runtime may call through selectors.`,
       changes: { retain_objc_annotated: true },
     };
   },
@@ -209,7 +213,7 @@ const rules: readonly Rule[] = [
     return {
       id: "retain_js_accessible",
       title: "Keep the JavaScript-exported protocols",
-      reason: `${plural(exported, "Swift file")} use JSExport: JavaScript calls their members.`,
+      reason: `${plural(exported, "Swift file")} ${uses(exported)} JSExport: JavaScript calls their members.`,
       changes: { retain_js_accessible: true },
     };
   },

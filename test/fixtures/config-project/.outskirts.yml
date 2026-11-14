@@ -1,0 +1,8 @@
+# Configuration of Kit
+retain_public: true # a library
+
+# Leave generated code out
+report_exclude:
+  - path: Sources/Generated/**
+    kinds: [unused]
+custom_note: kept
