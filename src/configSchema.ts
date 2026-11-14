@@ -2,6 +2,8 @@ export type OptionKind = "boolean" | "string" | "integer" | "list" | "enum";
 
 export type OptionValue = boolean | string | number | readonly string[];
 
+export type FormValues = Readonly<Record<string, OptionValue | undefined>>;
+
 export interface ConfigOption {
   key: string;
   section: string;
@@ -179,4 +181,21 @@ export function parseSchema(text: string): ConfigSchema {
     options.push(option);
   }
   return { id: typeof parsed.$id === "string" ? parsed.$id : undefined, options };
+}
+
+export function sameValue(a: OptionValue | undefined, b: OptionValue | undefined): boolean {
+  if (Array.isArray(a) || Array.isArray(b)) {
+    return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((entry, index) => entry === b[index]);
+  }
+  return a === b;
+}
+
+export function isDefault(option: ConfigOption, value: OptionValue | undefined): boolean {
+  if (value === undefined || value === "") {
+    return true;
+  }
+  if (option.defaultValue === undefined) {
+    return Array.isArray(value) && value.length === 0;
+  }
+  return sameValue(value, option.defaultValue);
 }

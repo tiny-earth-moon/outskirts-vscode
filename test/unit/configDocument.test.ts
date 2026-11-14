@@ -1,8 +1,8 @@
 import * as assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
-import { configFileName, isDefault, readConfig, schemaComment, updateConfig } from "../../src/configDocument";
-import { parseSchema } from "../../src/configSchema";
+import { configFileName, readConfig, schemaComment, updateConfig } from "../../src/configDocument";
+import { isDefault, parseSchema } from "../../src/configSchema";
 
 const { options, id } = parseSchema(readFileSync(path.join(__dirname, "../../../test/fixtures/config-schema.json"), "utf8"));
 const option = (key: string) => {

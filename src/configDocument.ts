@@ -1,5 +1,5 @@
 import { Document, isMap, isNode, isScalar, Pair, parseDocument, YAMLMap } from "yaml";
-import { ConfigOption, OptionValue } from "./configSchema";
+import { ConfigOption, FormValues, isDefault, OptionValue, sameValue } from "./configSchema";
 
 const format = { lineWidth: 0, flowCollectionPadding: false } as const;
 
@@ -15,8 +15,6 @@ export interface ConfigContents {
   complex: Record<string, string>;
   other: OtherKey[];
 }
-
-export type FormValues = Readonly<Record<string, OptionValue | undefined>>;
 
 export function configFileName(existing: readonly string[]): string {
   return configFileNames.find((name) => existing.includes(name)) ?? configFileNames[0];
@@ -48,23 +46,6 @@ export function normalizeValue(option: ConfigOption, raw: unknown): OptionValue 
       }
       return undefined;
   }
-}
-
-export function sameValue(a: OptionValue | undefined, b: OptionValue | undefined): boolean {
-  if (Array.isArray(a) || Array.isArray(b)) {
-    return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((entry, index) => entry === b[index]);
-  }
-  return a === b;
-}
-
-export function isDefault(option: ConfigOption, value: OptionValue | undefined): boolean {
-  if (value === undefined || value === "") {
-    return true;
-  }
-  if (option.defaultValue === undefined) {
-    return Array.isArray(value) && value.length === 0;
-  }
-  return sameValue(value, option.defaultValue);
 }
 
 function parse(text: string): Document {
