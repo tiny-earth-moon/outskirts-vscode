@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- A Projects view lists every project the extension can scan with its state, and scans, cancels, clears or configures each one from its row.
+
 ## 0.1.2 (2026-11-14)
 
 - Same extension as 0.1.1, published again so that it is available on Open VSX.

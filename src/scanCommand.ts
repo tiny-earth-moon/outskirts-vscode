@@ -22,6 +22,7 @@ export class Scanner {
   private controller: AbortController | undefined;
   private cancelled = false;
   private removed: string | undefined;
+  private readonly errors = new Set<string>();
   private readonly runningChanged = new vscode.EventEmitter<boolean>();
   readonly onDidChangeRunning = this.runningChanged.event;
   private readonly state = new ScanState((running) => {
@@ -39,6 +40,14 @@ export class Scanner {
 
   get scanning(): string | undefined {
     return this.state.scanning;
+  }
+
+  get failed(): ReadonlySet<string> {
+    return this.errors;
+  }
+
+  forget(key: string): void {
+    this.errors.delete(key);
   }
 
   cancel(): void {
@@ -70,6 +79,7 @@ export class Scanner {
       async (project) => {
         const controller = new AbortController();
         this.controller = controller;
+        this.errors.delete(project.key);
         this.store.startScan(project.key);
         try {
           counts.push(await this.run(project, controller));
@@ -79,6 +89,9 @@ export class Scanner {
         } catch (error) {
           if (error instanceof CancelledError && this.removed !== project.key) {
             this.cancelled = true;
+          }
+          if (!(error instanceof CancelledError)) {
+            this.errors.add(project.key);
           }
           void report(error, this.output);
         } finally {

@@ -8,6 +8,8 @@ import { OptionsView, createOptionsView } from "./optionsView";
 import { pickScanTargets } from "./pickFolder";
 import { Project } from "./project";
 import { ProjectList } from "./projectList";
+import { ProjectRow } from "./projectsModel";
+import { ProjectsTreeProvider, openConfiguration } from "./projectsTree";
 import { ResultsStore } from "./resultsStore";
 import { ResultsTreeProvider } from "./resultsTree";
 import { Scanner } from "./scanCommand";
@@ -70,6 +72,9 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
       await scanner.scan(picked);
     }
   };
+  const projectsTree = new ProjectsTreeProvider(store, () => projects.projects, () => scanner.scanning, () => scanner.failed);
+  const projectsView = vscode.window.createTreeView("outskirts.projects", { treeDataProvider: projectsTree });
+  const rowProject = (row: ProjectRow | undefined): Project | undefined => (row === undefined ? undefined : projects.find(row.key));
   setContext("groupBy", tree.groupBy);
   const ready = projects.refresh();
   context.subscriptions.push(
@@ -129,6 +134,44 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
     }),
     vscode.commands.registerCommand("outskirts.groupByKind", () => {
       groupBy("kind");
+    }),
+    projectsTree,
+    projectsView,
+    store.onDidChange(() => { projectsTree.refresh(); }),
+    projects.onDidChange(() => { projectsTree.refresh(); }),
+    scanner.onDidChangeRunning(() => { projectsTree.refresh(); }),
+    vscode.commands.registerCommand("outskirts.scanProject", async (row?: ProjectRow) => {
+      const project = rowProject(row);
+      if (project !== undefined) {
+        await scanner.scan([project]);
+      }
+    }),
+    vscode.commands.registerCommand("outskirts.scanAll", () => scanner.scan(projects.projects)),
+    vscode.commands.registerCommand("outskirts.clearProject", (row?: ProjectRow) => {
+      const project = rowProject(row);
+      if (project !== undefined) {
+        scanner.forget(project.key);
+        store.clear(project.key);
+        projectsTree.refresh();
+      }
+    }),
+    vscode.commands.registerCommand("outskirts.openConfiguration", async (row?: ProjectRow) => {
+      const project = rowProject(row);
+      if (project !== undefined) {
+        await openConfiguration(project);
+      }
+    }),
+    vscode.commands.registerCommand("outskirts.revealProject", async (row?: ProjectRow) => {
+      if (row === undefined) {
+        return;
+      }
+      options.select(row.key);
+      const node = tree.getChildren().find((child) => isFolderNode(child) && child.key === row.key);
+      if (node === undefined) {
+        await vscode.commands.executeCommand("outskirts.results.focus");
+        return;
+      }
+      await resultsView.reveal(node, { select: true, focus: true, expand: true });
     }),
     vscode.commands.registerCommand("outskirts.openSettings", () =>
       vscode.commands.executeCommand("workbench.action.openSettings", "@ext:tiny-earth-moon.outskirts"),
