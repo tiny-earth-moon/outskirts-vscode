@@ -87,6 +87,10 @@ export class ResultsTreeProvider implements vscode.TreeDataProvider<ResultNode> 
     return item;
   }
 
+  getParent(): ResultNode | undefined {
+    return undefined;
+  }
+
   dispose(): void {
     clearTimeout(this.timer);
     this.changed.dispose();

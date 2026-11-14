@@ -1,15 +1,17 @@
 import * as vscode from "vscode";
 import { discoverProjects, FolderListing, isCandidateDirectory } from "./projects";
 import { Project } from "./project";
+import { projectKind } from "./projectsModel";
 
 export async function findProjects(folders: readonly vscode.WorkspaceFolder[]): Promise<Project[]> {
   const listings = await Promise.all(folders.map(listFolder));
   const byKey = new Map(folders.map((folder) => [folder.uri.toString(), folder]));
+  const entries = new Map(listings.flatMap((listing) => [listing, ...listing.children]).map((listing) => [listing.key, listing.entries]));
   return discoverProjects(listings).flatMap((entry) => {
     const workspaceFolder = byKey.get(entry.folderKey);
     return workspaceFolder === undefined
       ? []
-      : [{ key: entry.key, name: entry.name, uri: vscode.Uri.parse(entry.key), workspaceFolder }];
+      : [{ key: entry.key, name: entry.name, uri: vscode.Uri.parse(entry.key), workspaceFolder, kind: projectKind(entries.get(entry.key) ?? []) }];
   });
 }
 

@@ -24,6 +24,8 @@ The output of outskirts is written to the "outskirts" output channel.
 
 ## Side bar
 
+The Projects view, first in the outskirts side bar, lists every project the extension can scan: the workspace folders and the Swift packages and Xcode projects found one level below them. Each row shows the project's name, its path and its state (scanning…, N results, no unused code, stale, not scanned or error), with an icon for a Swift package, an Xcode project or workspace, or another folder. Clicking a row shows its results in the Results view. Its inline buttons scan the project, cancel its scan, clear its results and open its `.outskirts.yml`, created with a link to the configuration documentation when it does not exist yet. The title bar scans all the projects and refreshes the list.
+
 The outskirts icon in the activity bar opens the results, grouped by file or by kind of finding with their counts; clicking a result opens its location. The title bar of the view has buttons to scan, cancel, show the options, switch the grouping, clear the results, refresh the projects and open the settings. After a scan, the status bar shows the number of results; clicking it shows the view.
 
 When a file with results changes after the scan starts, in the editor or on disk (for example by an agent; each project is watched as a whole), its results are stale: their diagnostics leave the Problems panel since they may point at the wrong lines, the file is marked "changed since scan" and its results "stale" in the tree, and the project and the status bar tell how many files are to rescan. Stale results are left out of Fix with Agent. Nothing is rescanned automatically, since a scan builds the project: scan again to refresh them.

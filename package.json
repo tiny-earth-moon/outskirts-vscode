@@ -52,6 +52,35 @@
   "contributes": {
     "commands": [
       {
+        "command": "outskirts.scanProject",
+        "title": "Scan Project",
+        "category": "outskirts",
+        "icon": "$(play)"
+      },
+      {
+        "command": "outskirts.scanAll",
+        "title": "Scan All Projects",
+        "category": "outskirts",
+        "icon": "$(run-all)"
+      },
+      {
+        "command": "outskirts.clearProject",
+        "title": "Clear Project Results",
+        "category": "outskirts",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "outskirts.openConfiguration",
+        "title": "Open Configuration",
+        "category": "outskirts",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "outskirts.revealProject",
+        "title": "Show Project Results",
+        "category": "outskirts"
+      },
+      {
         "command": "outskirts.scan",
         "title": "Scan",
         "category": "outskirts",
@@ -256,6 +285,10 @@
     "views": {
       "outskirts": [
         {
+          "id": "outskirts.projects",
+          "name": "Projects"
+        },
+        {
           "id": "outskirts.results",
           "name": "Results"
         },
@@ -291,6 +324,21 @@
     ],
     "menus": {
       "view/title": [
+        {
+          "command": "outskirts.scanAll",
+          "when": "view == outskirts.projects && !outskirts.scanning && outskirts.state != unavailable",
+          "group": "navigation@1"
+        },
+        {
+          "command": "outskirts.cancel",
+          "when": "view == outskirts.projects && outskirts.scanning",
+          "group": "navigation@1"
+        },
+        {
+          "command": "outskirts.refresh",
+          "when": "view == outskirts.projects",
+          "group": "navigation@2"
+        },
         {
           "command": "outskirts.scanView",
           "when": "view == outskirts.results && !outskirts.scanning && outskirts.state != unavailable",
@@ -359,6 +407,26 @@
       ],
       "commandPalette": [
         {
+          "command": "outskirts.scanProject",
+          "when": "false"
+        },
+        {
+          "command": "outskirts.clearProject",
+          "when": "false"
+        },
+        {
+          "command": "outskirts.openConfiguration",
+          "when": "false"
+        },
+        {
+          "command": "outskirts.revealProject",
+          "when": "false"
+        },
+        {
+          "command": "outskirts.scanAll",
+          "when": "outskirts.state != unavailable && !outskirts.scanning"
+        },
+        {
           "command": "outskirts.cancel",
           "when": "outskirts.scanning"
         },
@@ -416,6 +484,26 @@
         }
       ],
       "view/item/context": [
+        {
+          "command": "outskirts.scanProject",
+          "when": "view == outskirts.projects && viewItem =~ /^project\\.idle/ && !outskirts.scanning",
+          "group": "inline@1"
+        },
+        {
+          "command": "outskirts.cancel",
+          "when": "view == outskirts.projects && viewItem =~ /^project\\.scanning/",
+          "group": "inline@1"
+        },
+        {
+          "command": "outskirts.clearProject",
+          "when": "view == outskirts.projects && viewItem =~ /^project\\.idle\\.results/",
+          "group": "inline@2"
+        },
+        {
+          "command": "outskirts.openConfiguration",
+          "when": "view == outskirts.projects && viewItem =~ /^project/",
+          "group": "inline@3"
+        },
         {
           "command": "outskirts.scanFolder",
           "when": "view == outskirts.results && viewItem =~ /^folder/ && !outskirts.scanning",
