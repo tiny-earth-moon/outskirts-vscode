@@ -31,6 +31,8 @@ The outskirts icon in the activity bar opens the results, grouped by file or by 
 
 When a file with results changes after the scan starts, in the editor or on disk (for example by an agent; each project is watched as a whole), its results are stale: their diagnostics leave the Problems panel since they may point at the wrong lines, the file is marked "changed since scan" and its results "stale" in the tree, and the project and the status bar tell how many files are to rescan. Stale results are left out of Fix with Agent. Nothing is rescanned automatically, since a scan builds the project: scan again to refresh them.
 
+On an outskirts diagnostic in a Swift file, the Quick Fix menu (the lightbulb, Cmd+.) adds the comment command that keeps the code: `// outskirts:ignore` above the declaration and its attributes, `// outskirts:ignore:parameters <name>` above the function of an unused parameter, or `// outskirts:ignore:all` at the top of the file, after its header comment. The results of the file then become stale until the next scan.
+
 Below the results, the collapsible **Scan Options** section shows the options of a project with their current values:
 
 - **Reuse existing index**: a checkbox that scans without building, on the index of the last build (`--skip-build`).

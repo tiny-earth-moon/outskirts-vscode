@@ -2,6 +2,7 @@
 
 ## 0.2.0 (2026-11-14)
 
+- **Ignore quick fixes**: on an outskirts diagnostic in a Swift file, the lightbulb offers to add `// outskirts:ignore` above the declaration (above its attributes, below its doc comment), `// outskirts:ignore:parameters <name>` above the function of an unused parameter, appended to an existing list, or `// outskirts:ignore:all` after the header comment of the file; an existing comment is never duplicated, and the results of the file become stale.
 - **Projects view**: a Projects view lists every project the extension can scan with its state, and scans, cancels, clears or configures each one from its row.
 - **Configuration editor**: **outskirts: Edit Configuration**, also a Configuration row of Scan Options, edits `.outskirts.yml` in a form built from `outskirts config schema`, keeping comments and unknown keys, checks it with `outskirts config check` after saving, and recommends options from the files of the project.
 
