@@ -832,6 +832,7 @@
           {
             "id": "install",
             "title": "Install outskirts",
+            "when": "!outskirts.executableFound",
             "description": "Install the outskirts command line tool with Homebrew.\n[Open Terminal with the Command](command:outskirts.installExecutable)",
             "media": {
               "markdown": "media/walkthrough/install.md"

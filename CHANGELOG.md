@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- **Install prompt**: the empty Results view asks to install outskirts only once the check found it missing, not while the check runs.
+- **Install prompt**: the empty Results view asks to install outskirts only once the check found it missing, not while the check runs; the Getting Started walkthrough hides its install step once outskirts is found.
 
 ## 0.3.0 (2026-11-14)
 

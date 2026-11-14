@@ -23,6 +23,13 @@ describe("walkthrough", () => {
     assert.doesNotMatch(welcome[0].when, /!outskirts\.executableFound/);
   });
 
+  it("hides the install step once outskirts is found", () => {
+    const steps = (JSON.parse(readFileSync(path.join(root, "package.json"), "utf8")) as {
+      contributes: { walkthroughs: { steps: { id: string; when?: string }[] }[] };
+    }).contributes.walkthroughs[0].steps;
+    assert.equal(steps.find((step) => step.id === "install")?.when, "!outskirts.executableFound");
+  });
+
   it("opens once after install and never in tests", () => {
     assert.equal(shouldOpenWalkthrough(false, false), true);
     assert.equal(shouldOpenWalkthrough(true, false), false);
