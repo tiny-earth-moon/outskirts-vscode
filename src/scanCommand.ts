@@ -3,12 +3,12 @@ import { severityFromSetting } from "./diagnostics";
 import { toFindings } from "./findings";
 import { exitDescription, interpretRun } from "./outcome";
 import { ResultsStore } from "./resultsStore";
-import { CancelledError, ExecutableNotFoundError, runProcess } from "./runProcess";
+import { CancelledError, runProcess } from "./runProcess";
 import { buildScanArguments } from "./scanArguments";
 import { resolveExecutable } from "./executable";
 import { Project } from "./project";
 import { scanSummary, sequenceSummary } from "./summary";
-import { installHint } from "./optionsModel";
+import { failureToast, ScanError, scanError } from "./scanError";
 import { projectArguments, readProjectFolder } from "./xcodeProject";
 import { ScanState } from "./scanState";
 import { probeVersion } from "./versionProbe";
@@ -31,7 +31,7 @@ export class Scanner {
   private cancelled = false;
   private removed: string | undefined;
   private onSave = false;
-  private readonly errors = new Set<string>();
+  private readonly errors = new Map<string, ScanError>();
   private readonly baselines = new Set<string>();
   private readonly runningChanged = new vscode.EventEmitter<boolean>();
   readonly onDidChangeRunning = this.runningChanged.event;
@@ -42,6 +42,7 @@ export class Scanner {
   constructor(
     private readonly store: ResultsStore,
     private readonly output: vscode.OutputChannel,
+    private readonly viewsVisible: () => boolean = () => false,
   ) {}
 
   get running(): boolean {
@@ -56,7 +57,7 @@ export class Scanner {
     return this.running && this.onSave;
   }
 
-  get failed(): ReadonlySet<string> {
+  get failed(): ReadonlyMap<string, ScanError> {
     return this.errors;
   }
 
@@ -66,6 +67,10 @@ export class Scanner {
 
   forget(key: string): void {
     this.errors.delete(key);
+  }
+
+  forgetAll(): void {
+    this.errors.clear();
   }
 
   cancel(): void {
@@ -114,10 +119,13 @@ export class Scanner {
           if (error instanceof CancelledError && this.removed !== project.key) {
             this.cancelled = true;
           }
+          this.output.appendLine(error instanceof Error ? error.message : String(error));
           if (!(error instanceof CancelledError)) {
-            this.errors.add(project.key);
+            this.errors.set(project.key, scanError(error));
+            if (!this.viewsVisible()) {
+              void showFailure(project.name);
+            }
           }
-          void report(error, this.output);
         } finally {
           this.store.endScan(project.key);
           this.controller = undefined;
@@ -209,19 +217,10 @@ async function announce(message: string, count: number): Promise<void> {
   }
 }
 
-async function report(error: unknown, output: vscode.OutputChannel): Promise<void> {
-  const message = error instanceof Error ? error.message : String(error);
-  output.appendLine(message);
-  if (error instanceof CancelledError) {
-    return;
-  }
-  if (error instanceof ExecutableNotFoundError) {
-    void vscode.window.showErrorMessage(`${message} ${installHint}`);
-    return;
-  }
-  const openOutput = "Open Output";
-  const choice = await vscode.window.showErrorMessage(message, openOutput);
-  if (choice === openOutput) {
-    output.show();
+async function showFailure(project: string): Promise<void> {
+  const show = "Show";
+  const choice = await vscode.window.showErrorMessage(failureToast(project), show);
+  if (choice === show) {
+    await vscode.commands.executeCommand("outskirts.results.focus");
   }
 }

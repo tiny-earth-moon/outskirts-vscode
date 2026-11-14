@@ -1,4 +1,4 @@
-import { InvalidOutputError, parseResults, ScanResult } from "./results";
+import { FixTarget, InvalidOutputError, parseResults, ScanResult } from "./results";
 
 export interface ProcessRun {
   exitCode: number | null;
@@ -8,8 +8,12 @@ export interface ProcessRun {
 }
 
 export class ScanFailedError extends Error {
+  readonly fixes: readonly FixTarget[];
+
   constructor(readonly run: ProcessRun, readonly stderrTail: string) {
-    super(`${exitDescription(run)}${stderrTail === "" ? "" : `\n${stderrTail}`}${hintFor(stderrTail)}`);
+    const hint = hintFor(stderrTail);
+    super(`${exitDescription(run)}${stderrTail === "" ? "" : `\n${stderrTail}`}${hint === undefined ? "" : `\n${hint}`}`);
+    this.fixes = hint === undefined ? [] : ["arguments", "configuration"];
   }
 }
 
@@ -24,9 +28,8 @@ const hints: readonly [string, string][] = [
   ["'--schemes' option is required", "Name the schemes to build with \"--schemes <scheme>\" in Extra arguments, or \"schemes:\" in .outskirts.yml."],
 ];
 
-function hintFor(stderr: string): string {
-  const hint = hints.find(([error]) => stderr.includes(error));
-  return hint === undefined ? "" : `\n${hint[1]}`;
+function hintFor(stderr: string): string | undefined {
+  return hints.find(([error]) => stderr.includes(error))?.[1];
 }
 
 export function interpretRun(run: ProcessRun): ScanResult[] {

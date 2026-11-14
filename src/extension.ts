@@ -7,7 +7,8 @@ import { registerConfigEditor } from "./configEditor";
 import { bindDiagnostics, followSeverity, severityOverrides } from "./diagnostics";
 import { FolderNode, viewState } from "./folderModel";
 import { registerFixWithAgent } from "./fixWithAgent";
-import { isFolderNode } from "./folderTree";
+import { ErrorNode, isFolderNode } from "./folderTree";
+import { fixCommands } from "./scanError";
 import { registerIgnoreActions } from "./ignoreActions";
 import { OptionsView, createOptionsView } from "./optionsView";
 import { pickScanTargets } from "./pickFolder";
@@ -44,8 +45,9 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
   const store = new ResultsStore();
   const projects = new ProjectList();
   const agents = new AgentRegistry();
-  const scanner = new Scanner(store, output);
-  const tree = new ResultsTreeProvider(store, () => projects.infos, () => scanner.scanning);
+  let viewsVisible = (): boolean => false;
+  const scanner = new Scanner(store, output, () => viewsVisible());
+  const tree = new ResultsTreeProvider(store, () => projects.infos, () => scanner.scanning, Date.now, () => scanner.failed);
   const statusBar = createStatusBar(store, scanner, () => projects.infos);
   const setContext = (key: string, value: unknown): void => {
     void vscode.commands.executeCommand("setContext", `outskirts.${key}`, value);
@@ -58,7 +60,7 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
   const options = createOptionsView(projects, scanner, { get: () => tree.groupBy, set: groupBy }, agents);
   const resultsView = vscode.window.createTreeView("outskirts.results", { treeDataProvider: tree, showCollapseAll: true });
   const updateState = (): void => {
-    setContext("state", viewState(projects.infos, store.all()));
+    setContext("state", viewState(projects.infos, store.all(), scanner.failed));
     setContext("hasResults", store.total > 0);
     resultsView.description = newSinceBaselineText(store.total, [...scanner.baselined].some((key) => store.all().has(key)));
     tree.refresh();
@@ -91,6 +93,8 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
         .then((choice) => (choice === undefined ? undefined : vscode.commands.executeCommand("workbench.action.reloadWindow")));
     },
   );
+  viewsVisible = () => resultsView.visible || projectsView?.visible === true;
+  const errorProject = (node: ErrorNode | undefined): Project | undefined => (node === undefined ? undefined : projects.find(node.key));
   const rowProject = (row: ProjectRow | undefined): Project | undefined => (row === undefined ? undefined : projects.find(row.key));
   const loggedSeverity = new Set<string>();
   const logSeverityOnce = (message: string): void => {
@@ -160,12 +164,40 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
       scanner.cancel();
     }),
     vscode.commands.registerCommand("outskirts.clear", () => {
+      scanner.forgetAll();
       store.clearAll();
+      updateState();
+      statusBar.update();
+    }),
+    vscode.commands.registerCommand("outskirts.openOutput", () => {
+      output.show();
+    }),
+    vscode.commands.registerCommand("outskirts.scanAgain", async (node?: ErrorNode) => {
+      const project = errorProject(node);
+      if (project !== undefined) {
+        await scanner.scan([project]);
+      }
+    }),
+    vscode.commands.registerCommand("outskirts.fixScanError", async (node?: ErrorNode) => {
+      const fixes = node?.scanError.fixes ?? [];
+      if (node === undefined || fixes.length === 0) {
+        return;
+      }
+      const picked = fixes.length === 1
+        ? fixes[0]
+        : (await vscode.window.showQuickPick(fixes.map((fix) => ({ label: fixCommands[fix].label, fix })), { title: "Fix the scan" }))?.fix;
+      if (picked !== undefined) {
+        const fix = fixCommands[picked];
+        await vscode.commands.executeCommand(fix.command, ...fix.arguments(node.key));
+      }
     }),
     vscode.commands.registerCommand("outskirts.clearFolder", (node?: FolderTarget) => {
       const project = target(node);
       if (project !== undefined) {
+        scanner.forget(project.key);
         store.clear(project.key);
+        updateState();
+        statusBar.update();
       }
     }),
     vscode.commands.registerCommand("outskirts.groupByFile", () => {
@@ -192,6 +224,7 @@ export function activate(context: vscode.ExtensionContext): OutskirtsApi {
         scanner.forget(project.key);
         store.clear(project.key);
         projectsTree.refresh();
+        statusBar.update();
       }
     }),
     vscode.commands.registerCommand("outskirts.openConfiguration", async (row?: ProjectRow) => {

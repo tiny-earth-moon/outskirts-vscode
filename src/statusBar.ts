@@ -18,6 +18,10 @@ export function createStatusBar(
       item.text = scanner.scanningOnSave ? "$(loading~spin) outskirts: scanning on save…" : "$(loading~spin) outskirts";
       item.tooltip = scanner.scanningOnSave ? "outskirts: scanning on save, click to cancel" : "outskirts: scanning";
       item.show();
+    } else if (scanner.failed.size > 0) {
+      item.text = "$(error) outskirts: scan failed";
+      item.tooltip = "outskirts: scan failed, click to show it";
+      item.show();
     } else if (store.all().size === 0) {
       item.hide();
     } else {

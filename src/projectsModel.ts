@@ -21,7 +21,7 @@ export interface ProjectRow extends ProjectSource {
 export interface ProjectsContext {
   results: ReadonlyMap<string, FolderResults>;
   scanning: string | undefined;
-  failed: ReadonlySet<string>;
+  failed: { has(key: string): boolean };
   baselined?: ReadonlySet<string>;
 }
 
@@ -54,7 +54,7 @@ export function stateText(state: ProjectState, entry: FolderResults | undefined)
     case "scanning":
       return "scanning…";
     case "error":
-      return "error";
+      return "scan failed";
     case "notScanned":
       return "not scanned";
     case "empty":

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Errors in the views**: a failed scan no longer shows its message in a notification; Results shows an error row with the first sentence, the full message as tooltip, **Open Output**, **Scan Again** and, when the error names Extra arguments or the configuration file, **Fix…**; the Projects row and the status bar say "scan failed". A short notification remains only when the outskirts views are hidden. The error stays until the next successful scan or Clear.
 - **Install prompt**: the empty Results view asks to install outskirts only once the check found it missing, not while the check runs; the Getting Started walkthrough hides its install step once outskirts is found.
 
 ## 0.3.0 (2026-11-14)

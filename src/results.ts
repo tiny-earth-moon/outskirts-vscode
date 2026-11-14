@@ -10,13 +10,20 @@ export interface ScanResult {
   modules?: string[];
 }
 
-export class InvalidOutputError extends Error {}
+export type FixTarget = "arguments" | "configuration";
+
+export class InvalidOutputError extends Error {
+  constructor(message: string, readonly fixes: readonly FixTarget[] = []) {
+    super(message);
+  }
+}
 
 export function parseResults(stdout: string): ScanResult[] {
   if (stdout.trim() === "") {
     throw new InvalidOutputError(
       "outskirts printed no results, not even [] for none, so they went elsewhere: remove --skip-stdout-results from Extra arguments, " +
         "or skip_stdout_results from the configuration file.",
+      ["arguments", "configuration"],
     );
   }
   let parsed: unknown;

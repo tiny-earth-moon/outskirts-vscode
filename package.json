@@ -53,6 +53,24 @@
   "contributes": {
     "commands": [
       {
+        "command": "outskirts.openOutput",
+        "title": "Open Output",
+        "category": "outskirts",
+        "icon": "$(output)"
+      },
+      {
+        "command": "outskirts.scanAgain",
+        "title": "Scan Again",
+        "category": "outskirts",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "outskirts.fixScanError",
+        "title": "Fix…",
+        "category": "outskirts",
+        "icon": "$(wrench)"
+      },
+      {
         "command": "outskirts.scanProject",
         "title": "Scan Project",
         "category": "outskirts",
@@ -672,6 +690,14 @@
       ],
       "commandPalette": [
         {
+          "command": "outskirts.scanAgain",
+          "when": "false"
+        },
+        {
+          "command": "outskirts.fixScanError",
+          "when": "false"
+        },
+        {
           "command": "outskirts.filterResultsActive",
           "when": "false"
         },
@@ -761,6 +787,21 @@
         }
       ],
       "view/item/context": [
+        {
+          "command": "outskirts.fixScanError",
+          "when": "view == outskirts.results && viewItem == scanError.fixable",
+          "group": "inline@1"
+        },
+        {
+          "command": "outskirts.scanAgain",
+          "when": "view == outskirts.results && viewItem =~ /^scanError/ && !outskirts.scanning",
+          "group": "inline@2"
+        },
+        {
+          "command": "outskirts.openOutput",
+          "when": "view == outskirts.results && viewItem =~ /^scanError/",
+          "group": "inline@3"
+        },
         {
           "command": "outskirts.scanProject",
           "when": "view == outskirts.projects && viewItem =~ /^project\\.idle/ && !outskirts.scanning",

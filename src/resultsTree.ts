@@ -1,8 +1,9 @@
 import * as vscode from "vscode";
 import { FolderInfo, nextDescriptionChange } from "./folderModel";
-import { isFolderNode, isMessageNode, isResultGroup, treeChildren, TreeNode } from "./folderTree";
+import { isErrorNode, isFolderNode, isMessageNode, isResultGroup, treeChildren, TreeNode } from "./folderTree";
 import { noFilter, ResultsFilter } from "./resultsFilter";
 import { ResultsStore } from "./resultsStore";
+import { errorContextValue, errorNodeFields, ScanError, wrappedMarkdown } from "./scanError";
 import { isStaleFinding, staleHint } from "./staleModel";
 import { GroupBy, groupDescription, leafDescription, leafLabel } from "./treeModel";
 
@@ -20,6 +21,7 @@ export class ResultsTreeProvider implements vscode.TreeDataProvider<ResultNode> 
     private readonly folders: () => readonly FolderInfo[],
     private readonly scanning: () => string | undefined,
     private readonly now: () => number = Date.now,
+    private readonly errors: () => ReadonlyMap<string, ScanError> = () => new Map(),
   ) {}
 
   get groupBy(): GroupBy {
@@ -57,6 +59,7 @@ export class ResultsTreeProvider implements vscode.TreeDataProvider<ResultNode> 
       scanning: this.scanning(),
       now: this.now(),
       filter: this.currentFilter,
+      errors: this.errors(),
     };
     return treeChildren(context, node);
   }
@@ -66,6 +69,16 @@ export class ResultsTreeProvider implements vscode.TreeDataProvider<ResultNode> 
       const item = new vscode.TreeItem(node.notice, vscode.TreeItemCollapsibleState.None);
       item.iconPath = new vscode.ThemeIcon("filter");
       item.command = { command: "outskirts.clearFilter", title: "Clear Filter" };
+      return item;
+    }
+    if (isErrorNode(node)) {
+      const fields = errorNodeFields(node.scanError);
+      const item = new vscode.TreeItem(fields.label, vscode.TreeItemCollapsibleState.None);
+      item.id = `error:${node.key}`;
+      item.description = fields.description;
+      item.tooltip = new vscode.MarkdownString(wrappedMarkdown(fields.tooltip));
+      item.iconPath = new vscode.ThemeIcon("error");
+      item.contextValue = errorContextValue(node.scanError);
       return item;
     }
     if (isFolderNode(node)) {
