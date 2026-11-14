@@ -18,8 +18,11 @@ export class InvalidOutputError extends Error {
   }
 }
 
-export function parseResults(stdout: string): ScanResult[] {
+export function parseResults(stdout: string, redirects: readonly FixTarget[] = ["arguments", "configuration"]): ScanResult[] {
   if (stdout.trim() === "") {
+    if (redirects.length === 0) {
+      return [];
+    }
     throw new InvalidOutputError(
       "outskirts printed no results, not even [] for none, so they went elsewhere: remove --skip-stdout-results from Extra arguments, " +
         "or skip_stdout_results from the configuration file.",

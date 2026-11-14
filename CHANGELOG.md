@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **Clean projects**: a successful scan that prints nothing, as outskirts does with `--quiet` when there are no results, now shows zero results instead of an error; the error remains when `--skip-stdout-results` or `--write-results` (Extra arguments) or `skip_stdout_results` or `write_results` (configuration file, including one named by `--config`) send the results elsewhere.
+
 ## 0.3.1 (2026-11-14)
 
 - **Errors in the views**: a failed scan no longer shows its message in a notification; Results shows an error row with the first sentence, the full message as tooltip, **Open Output**, **Scan Again** and, when the error names Extra arguments or the configuration file, **Fix…**; the Projects row and the status bar say "scan failed". A short notification remains only when the outskirts views are hidden. The error stays until the next successful scan or Clear.

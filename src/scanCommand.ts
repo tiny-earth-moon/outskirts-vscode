@@ -19,6 +19,8 @@ import { checkRelativeLocations } from "./relativeResults";
 import { toEditorColumns } from "./editorColumns";
 import { configuredBaseline, usesBaseline } from "./baseline";
 import { readConfigFile } from "./baselineConfig";
+import { FixTarget } from "./results";
+import { readScanConfig, redirectSources } from "./resultsRedirect";
 
 export interface ScanOverrides {
   arguments?: readonly string[];
@@ -177,7 +179,7 @@ export class Scanner {
       },
     );
     this.output.appendLine(exitDescription(run));
-    const results = interpretRun(run);
+    const results = interpretRun(run, await this.redirects(run.stdout, cwd, [...extra, ...(overrides.arguments ?? [])]));
     const base = relativeResultsBase(cwd, extra);
     await checkRelativeLocations(results, base);
     const aliases = await folderAliases([cwd, project.workspaceFolder.uri.fsPath]);
@@ -187,6 +189,18 @@ export class Scanner {
     await this.noteBaseline(project.key, cwd, extra);
     this.store.set(project.key, findings, severity, Date.now(), onSave && skipBuild);
     return findings.length;
+  }
+
+  private async redirects(stdout: string, cwd: string, extra: readonly string[]): Promise<FixTarget[]> {
+    if (stdout.trim() !== "") {
+      return [];
+    }
+    try {
+      return redirectSources(extra, await readScanConfig(cwd, extra));
+    } catch (error) {
+      this.output.appendLine(`Could not read the configuration file: ${error instanceof Error ? error.message : String(error)}`);
+      return ["configuration"];
+    }
   }
 
   private async noteBaseline(key: string, cwd: string, extra: readonly string[]): Promise<void> {
