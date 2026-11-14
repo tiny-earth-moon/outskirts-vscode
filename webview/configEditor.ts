@@ -233,6 +233,9 @@ function listControl(option: ConfigOption): HTMLElement {
   const input = h("input", { type: "text", class: "add", spellcheck: "false", placeholder: "Add…", "aria-label": `Add to ${option.key}` });
   const render = (): void => {
     container.replaceChildren(
+      ...(option.builtIn ?? []).map((entry) =>
+        h("span", { class: "tag built-in", title: "Built-in default, always applied" }, h("span", { class: "tag-text" }, entry)),
+      ),
       ...entries().map((entry, index) => {
         const remove = button("×", () => {
           const next = entries();
@@ -308,7 +311,14 @@ function row(option: ConfigOption): HTMLElement {
     { class: "meta" },
     head,
     h("p", { class: "description" }, option.description),
-    h("p", { class: "default" }, "Default: ", h("code", {}, describeValue(option.defaultValue))),
+    option.builtIn === undefined
+      ? h("p", { class: "default" }, "Default: ", h("code", {}, describeValue(option.defaultValue)))
+      : h(
+          "p",
+          { class: "default built-in" },
+          "Added to the built-in defaults: ",
+          ...option.builtIn.flatMap((entry, index) => [index === 0 ? "" : ", ", h("code", {}, entry)]),
+        ),
     h("p", { class: "error", role: "alert" }),
   );
   let editor: HTMLElement;

@@ -12,6 +12,7 @@ export interface ConfigOption {
   defaultValue: OptionValue | undefined;
   choices?: readonly string[];
   acceptsList?: boolean;
+  builtIn?: readonly string[];
 }
 
 export interface ConfigSchema {
@@ -78,6 +79,12 @@ const sectionKeys: Readonly<Record<string, readonly string[]>> = {
   Retention: ["no_retain_spi", "external_encodable_protocols", "external_codable_protocols", "disable_platform_conditional_retention"],
   Advanced: ["disable_update_check"],
 };
+
+const additiveKeys = new Set(["index_exclude"]);
+
+export function isAdditive(key: string, description: string): boolean {
+  return additiveKeys.has(key) || /\badded to the (?:default|built-in)/i.test(description);
+}
 
 const sectionPrefixes: readonly (readonly [string, string])[] = [
   ["localized_string_", "String Catalogs"],
@@ -177,6 +184,10 @@ export function parseSchema(text: string): ConfigSchema {
     }
     if (kind === "boolean" && types(property).includes("array")) {
       option.acceptsList = true;
+    }
+    if (kind === "list" && Array.isArray(option.defaultValue) && option.defaultValue.length > 0 && isAdditive(key, option.description)) {
+      option.builtIn = option.defaultValue;
+      option.defaultValue = [];
     }
     options.push(option);
   }

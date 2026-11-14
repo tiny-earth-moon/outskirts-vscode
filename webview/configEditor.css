@@ -477,6 +477,16 @@ fieldset:disabled {
   font-size: 0.9em;
 }
 
+.tag.built-in {
+  color: var(--muted);
+  background: transparent;
+  border: 1px dashed var(--border);
+}
+
+.tag.built-in .tag-text {
+  padding-right: 6px;
+}
+
 .tag-text {
   padding: 1px 2px 1px 6px;
   overflow-wrap: anywhere;

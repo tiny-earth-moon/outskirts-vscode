@@ -44,8 +44,8 @@ describe("isDefault", () => {
   it("treats empty strings and empty lists as unset", () => {
     assert.equal(isDefault(option("project"), ""), true);
     assert.equal(isDefault(option("schemes"), []), true);
-    assert.equal(isDefault(option("index_exclude"), ["**/*?.build/**/*", "**/SourcePackages/checkouts/**"]), true);
-    assert.equal(isDefault(option("index_exclude"), []), false);
+    assert.equal(isDefault(option("index_exclude"), []), true);
+    assert.equal(isDefault(option("localized_string_catalog_exclude"), ["**/InfoPlist.xcstrings", "**/AppShortcuts.xcstrings"]), true);
     assert.equal(isDefault(option("cache_max_age_days"), 14), true);
     assert.equal(isDefault(option("strict"), true), false);
   });
@@ -104,6 +104,12 @@ describe("updateConfig", () => {
         "",
       ].join("\n"),
     );
+  });
+
+  it("writes only the file's own values of an option added to built-in defaults", () => {
+    assert.equal(readConfig("strict: true\n", options).values.index_exclude, undefined);
+    assert.equal(updateConfig("", options, { index_exclude: ["Generated/**"] }), "index_exclude:\n  - Generated/**\n");
+    assert.equal(updateConfig("index_exclude:\n  - Generated/**\n", options, { index_exclude: [] }), "");
   });
 
   it("never writes a default value", () => {

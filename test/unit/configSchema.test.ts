@@ -22,13 +22,24 @@ describe("parseSchema", () => {
   it("derives the control of each option from its type", () => {
     assert.deepEqual([option("strict").kind, option("strict").defaultValue], ["boolean", false]);
     assert.deepEqual([option("schemes").kind, option("schemes").defaultValue], ["list", []]);
-    assert.deepEqual(option("index_exclude").defaultValue, ["**/*?.build/**/*", "**/SourcePackages/checkouts/**"]);
+    assert.deepEqual(option("localized_string_catalog_exclude").defaultValue, ["**/InfoPlist.xcstrings", "**/AppShortcuts.xcstrings"]);
+    assert.equal(option("localized_string_catalog_exclude").builtIn, undefined);
     assert.deepEqual([option("format").kind, option("format").choices?.[0], option("format").defaultValue], ["enum", "xcode", "xcode"]);
     assert.deepEqual([option("cache_max_age_days").kind, option("cache_max_age_days").defaultValue], ["integer", 14]);
     assert.deepEqual([option("project").kind, option("project").defaultValue], ["string", undefined]);
     assert.equal(option("report_exclude").kind, "list");
     assert.deepEqual([option("retain_public").kind, option("retain_public").acceptsList], ["boolean", true]);
     assert.equal(option("disable_platform_conditional_retention").defaultValue, true);
+  });
+
+  it("keeps the built-in values of an option whose file values are added to them apart from its default", () => {
+    const indexExclude = option("index_exclude");
+    assert.deepEqual(indexExclude.builtIn, ["**/*?.build/**/*", "**/SourcePackages/checkouts/**"]);
+    assert.deepEqual(indexExclude.defaultValue, []);
+    const parsed = parseSchema(
+      JSON.stringify({ properties: { extra_globs: { type: "array", default: ["a"], description: "Globs, added to the built-in ones." } } }),
+    );
+    assert.deepEqual([parsed.options[0].builtIn, parsed.options[0].defaultValue], [["a"], []]);
   });
 
   it("files every option under a known section", () => {
