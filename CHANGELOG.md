@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.2 (2026-11-14)
 
 - **Clean projects**: a successful scan that prints nothing, as outskirts does with `--quiet` when there are no results, now shows zero results instead of an error; the error remains when `--skip-stdout-results` or `--write-results` (Extra arguments) or `skip_stdout_results` or `write_results` (configuration file, including one named by `--config`) send the results elsewhere.
 
