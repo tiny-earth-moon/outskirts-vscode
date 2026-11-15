@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.3 (2026-11-15)
+
+- **Manifest**: the `onView:outskirts.results` activation event is dropped, as VS Code 1.74 and later generate it from the contributed views; VS Code no longer warns about it in `package.json`.
+
 ## 0.3.2 (2026-11-14)
 
 - **Clean projects**: a successful scan that prints nothing, as outskirts does with `--quiet` when there are no results, now shows zero results instead of an error; the error remains when `--skip-stdout-results` or `--write-results` (Extra arguments) or `skip_stdout_results` or `write_results` (configuration file, including one named by `--config`) send the results elsewhere.
